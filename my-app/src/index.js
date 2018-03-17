@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import MainMenu from './menu';
 
 class Login extends React.Component {
     constructor(props) {
@@ -48,17 +49,17 @@ class Login extends React.Component {
         console.log("llego a handle submit cambio psswrd");
         const { name, value } = e.target;
         this.setState({ [name]: value });
-        fetch("http://127.0.0.1:8000/login/"+this.state.user+"/"+this.state.password+"/")
+        fetch("http://192.168.1.46:8000/login/"+this.state.user+"/"+this.state.password+"/")
         .then(response => {return response.json()})
-        .then((json) => this.setState({ logedIn: json.result }));
+        .then((json) => this.setState({ logedIn: json.result, idUser: json.id }));
         this.setState({errorMessage: !this.state.logedIn });
         console.log("se hizo el fecth y logedIn = "+this.state.logedIn);     
     }
 
     render(){
-      const { user, password, submittable, logedIn, errorMessage, changePassword} = this.state;
+      const { user, password, submittable, logedIn, errorMessage, changePassword, idUser } = this.state;
       if (logedIn){
-        return (<h1>Ingresaste OK!!</h1>);
+        return (<MainMenu />);
       }
       if(changePassword && !logedIn)
         return (<EnterUser/>);
@@ -147,7 +148,7 @@ class EnterUser extends React.Component {
         console.log("llego a handle submit");
         const { name, value } = e.target;
         this.setState({ [name]: value });
-        fetch("http://127.0.0.1:8000/userQuestion/"+this.state.user+"/")
+        fetch("http://192.168.1.46:8000/userQuestion/"+this.state.user+"/")
         .then(response => {return response.json()})
         .then((json) => this.setState(
             { question: json.question, errorMessage: !json.result, init: !json.result, secretQuestion: json.result}));  
