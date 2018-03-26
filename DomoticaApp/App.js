@@ -1,36 +1,61 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Button, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, Button, TextInput, Alert, TouchableHighlight } from 'react-native';
+import { StackNavigator } from 'react-navigation';
 
-export default class App extends React.Component {
+function LogoLogin(){
+  return (
+    <View style={{flex: 3, backgroundColor: 'transparent'}} >
+
+      <View style={styles.logo}>
+        <Image source={require('./domotica.png')} style={{flex: 1}} resizeMode="contain"/>
+      </View>
+    </View>
+  );
+}
+
+class ErrorMessage extends React.Component {
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    return (
+      <View style={styles.errorContainer} >
+        <Text style={styles.errorText}>{this.props.message}</Text>
+      </View>);
+  }
+}
+
+class App extends React.Component {
   constructor() {
     super();
 
     this.state = {
-        user: 'ceci',
-        password: 'chechu',
+        user: '',
+        password: '',
         submittable: false,
         logedIn: false,
-        errorMessage: true,
+        errorMessage: false,
         changePassword: false,
+        message: 'No hemos encontrado esa combinación de usuario y contraseña. Si no recuerda su contraseña ingrese a Olvidé mi contraseña.',
     }
 
-    this.handleSubmit = this.handleSubmit.bind(this);
+  }
 
-  };
-
-  handleSubmit(event) {
-    this.setState({value: event.target.value});
-    fetch("http://127.0.0.1:8000/login/"+this.state.user+"/"+this.state.password+"/")
+  handleSubmit() {
+    fetch("http://192.168.43.77:8000/login/Ceci/chechu/")
     .then(response => {return response.json()})
-    .then((json) => this.setState({ logedIn: json.result, errorMessage: !json.result }))
+    .then((json) => this.setState({ logedIn: json.result, errorMessage: !json.result, idUser:json.id }))
     .catch((error) => {
-      console.log(error.message);
+      this.setState({errorMessage: true})
+      console.error(error);
     });
+    Alert.alert("holaaaaa putooooo!!");
   }
   
   render() {
     this.state.submittable = this.state.user.length > 0 && this.state.password.length > 4;
-    const { user, password, submittable, logedIn, errorMessage, changePassword, idUser } = this.state;
+    const { user, password, submittable, logedIn, errorMessage, changePassword, idUser, message } = this.state;
     if (logedIn){
       return (<MainMenu />);
     }
@@ -40,19 +65,11 @@ export default class App extends React.Component {
       return (
         <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
 
-          <View style={{flex: 3, backgroundColor: 'transparent'}} >
-
-            <View style={styles.logo}>
-              <Image source={require('./domotica.png')} style={{flex: 1}} resizeMode="contain"/>
-            </View>
-
-          </View>
+          <LogoLogin/>
 
           <View style={{flex: 2, backgroundColor: 'transparent', alignItems: 'center'}} >
             { errorMessage && (
-              <View style={styles.errorContainer} >
-                <Text style={styles.errorText}>No hemos encontrado esa combinación de usuario y contraseña. Si no recuerda su contraseña ingrese a Olvidé mi contraseña.</Text>
-              </View>)
+              <ErrorMessage message={this.state.message}/>)
             }
             <View style={styles.inputContainerLogin}>
                 
@@ -76,6 +93,7 @@ export default class App extends React.Component {
                 <TextInput
                   style={styles.inputLogin}
                   value={this.state.password}
+                  secureTextEntry={true}
                   placeholder="contraseña"
                   placeholderTextColor='rgb(199, 199, 199)'
                   underlineColorAndroid="transparent"
@@ -89,15 +107,16 @@ export default class App extends React.Component {
           <View style={{flex: 2, backgroundColor: 'transparent', justifyContent: 'flex-start'} } >
             
             { submittable && (
+              <TouchableHighlight onPress={this.handleSubmit} underlayColor='rgb(22, 43, 59)'>
                 <View style={styles.buttonContainer} key="2">
                   <Text style={styles.textSubmitLogin}>Login</Text>
                 </View>
-            )}
-            <View style={styles.linkLogin} key="1">
-                <Text style={styles.textLinkLogin} onPress={this.handleChange}>OLVIDÉ MI CONTRASEÑA</Text>
+              </TouchableHighlight>
+            )}            
+            
+            <View style={styles.linkLogin} key="1" >
+                <Text style={styles.textLinkLogin} onPress={() => this.props.navigation.navigate('ForgotPassword')} >OLVIDÉ MI CONTRASEÑA</Text>
             </View>
-
-              
           </View>
         </View>
 
@@ -162,10 +181,239 @@ export default class App extends React.Component {
 }
 
 class ForgotPassword extends React.Component {
+  constructor(){
+    super();
+
+    this.state = {
+      user: '',
+      submittable: false,
+      errorMessage: false,
+      result: false,
+      idUser: 0,
+      message: 'No se encontró un usuario con ese nombre.'
+    };
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    
+  }
+
+  handleSubmit(){
+    /*fetch("http://127.0.0.1:8000/validateUser/"+this.state.user+"/")
+    .then(response => {return response.json()})
+    .then((json) => this.setState({ result: json.result, errorMessage: !json.result, idUser: json.id }))
+    .catch((error) => {
+      console.log(error.message);
+    });
+    if(this.state.result){*/
+      // pasar a nueva contraseña
+   // }
+  }
+
+
   render(){
-    return (<Text>Vamo los pibeeeee!!!</Text>);
+    this.state.submittable = this.state.user.length > 0;
+    const { user, submittable, errorMessage, idUser, message, result } = this.state;
+    return (
+      <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
+        <LogoLogin/>
+        
+        <View>
+          {errorMessage && <ErrorMessage message={message} />}
+        </View>
+        <View style={styles.inputContainerLogin}>
+                
+          <Image source={require('./userIcon.png')} style={styles.inputIconLogin} />
+        
+          <TextInput
+            style={styles.inputLogin}
+            value={this.state.user} 
+            placeholder="usuario"
+            placeholderTextColor="rgb(202, 199, 199)"
+            underlineColorAndroid="transparent"
+            onChangeText={(user) => this.setState({user: user})}
+          />
+    
+        </View>
+        { submittable && (
+              <TouchableHighlight onPress={() => this.navigation.navigate('SecretAnswer')} underlayColor='rgb(22, 43, 59)'>
+                <View style={styles.buttonContainer} key="2">
+                  <Text style={styles.textSubmitLogin}>Continuar</Text>
+                </View>
+              </TouchableHighlight>
+        )} 
+      </View>
+    );
   }
 }
+
+class SecretAnswer extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      question: '',
+      answer: '',
+      submittable: '',
+      errorMessage: false,
+      message: 'La respuesta es incorrecta, intente nuevamente.',
+    }
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    
+  }
+
+  handleSubmit() {
+    /*fetch("http://127.0.0.1:8000/validateUser/"+this.state.user+"/")
+    .then(response => {return response.json()})
+    .then((json) => this.setState({ result: json.result, errorMessage: !json.result, idUser: json.id }))
+    .catch((error) => {
+      console.log(error.message);
+    });
+    if(this.state.result){*/
+      //() => this.props.navigation.navigate('Login'); 
+   // }
+  }
+
+  componentWillMount() {
+     question = '¿Quién es su persona favorita?';
+  }
+
+  render(){
+    this.state.submittable = this.state.answer.length > 0;
+    const { submittable, errorMessage, message } = this.state;
+    return(
+      <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
+        <LogoLogin/>
+        
+        <View>
+          {errorMessage && <ErrorMessage message={message} />}
+        </View>
+        <View style={styles.inputContainerLogin}>
+                
+          <TextInput
+            style={styles.inputLogin}
+            value={this.state.answer} 
+            placeholder="respuesta"
+            placeholderTextColor="rgb(202, 199, 199)"
+            underlineColorAndroid="transparent"
+            onChangeText={(answer) => this.setState({answer: answer})}
+          />
+    
+        </View>
+        { submittable && (
+              <TouchableHighlight onPress={() => this.navigation.navigate('ChangePassword')} underlayColor='rgb(22, 43, 59)'>
+                <View style={styles.buttonContainer}>
+                  <Text style={styles.textSubmitLogin}>Continuar</Text>
+                </View>
+              </TouchableHighlight>
+        )}
+      </View>
+    );
+  }
+}
+
+class ChangePassword extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      submittable: false,
+      password: '',
+      repeatPassword: '',
+      errorMessage: false,
+      message: 'Se produjo un problema, por favor intente nuevamente.',
+      result: false,
+    }
+
+  }
+
+  render(){
+    this.state.submittable = this.state.password.length > 4 && this.state.password==this.state.repeatPassword; 
+    const { submittable, errorMessage, message, result, password, repeatPassword } = this.state;
+    return(
+      <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
+        <LogoLogin/>
+        
+        <View>
+          {errorMessage && <ErrorMessage message={message} />}
+        </View>
+        <View style={styles.inputContainerLogin}>
+          
+          <Image source={require('./psswrdIcon.png')} style={styles.inputIconLogin} />
+          
+          <TextInput
+            style={styles.inputLogin}
+            value={this.state.password} 
+            placeholder="contraseña"
+            placeholderTextColor="rgb(202, 199, 199)"
+            underlineColorAndroid="transparent"
+            secureTextEntry={true}
+            onChangeText={(password) => this.setState({password: password})}
+          />
+    
+        </View>
+        <View style={styles.inputContainerLogin}>
+          
+          <Image source={require('./psswrdIcon.png')} style={styles.inputIconLogin} />
+          
+          <TextInput
+            style={styles.inputLogin}
+            value={this.state.repeatPassword} 
+            placeholder="contraseña"
+            placeholderTextColor="rgb(202, 199, 199)"
+            underlineColorAndroid="transparent"
+            secureTextEntry={true}
+            onChangeText={(repeatPassword) => this.setState({repeatPassword: repeatPassword})}
+          />
+    
+        </View>
+        { submittable && (
+              <TouchableHighlight onPress={() => this.navigation.navigate('Login')} underlayColor='rgb(22, 43, 59)'>
+                <View style={styles.buttonContainer}>
+                  <Text style={styles.textSubmitLogin}>Continuar</Text>
+                </View>
+              </TouchableHighlight>
+        )}
+      </View>
+    );
+  }
+}
+
+/*class MainMenu extends React.Component{
+  constructor(props){
+    super(props);
+
+    this.state = {
+      role = 0,
+    }
+  }
+
+  render(){
+    return(<Text>Menu ppal</Text>);
+  }
+}*/
+
+export default StackNavigator({
+    Login: {
+      screen: App,
+    },
+    ForgotPassword: {
+      screen: ForgotPassword,
+    },
+    SecretAnswer: {
+      screen: SecretAnswer,
+    },
+    ChangePassword: {
+      screen: ChangePassword,
+    },
+    /*MainMenu: { 
+      screen: MainMenu,
+    },*/
+  },
+  {
+    initialRouteName: 'Login',
+  }
+);
 
 const styles = StyleSheet.create({
  
