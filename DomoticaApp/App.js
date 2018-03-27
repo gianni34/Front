@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Image, Button, TextInput, Alert, TouchableHighlight } from 'react-native';
 import { StackNavigator } from 'react-navigation';
+import Profile from './Profile.js'
 
 function LogoLogin(){
   return (
@@ -108,7 +109,7 @@ class App extends React.Component {
             
             { submittable && (
               <TouchableHighlight onPress={this.handleSubmit} underlayColor='rgb(22, 43, 59)'>
-                <View style={styles.buttonContainer} key="2">
+                <View style={styles.buttonContainer} key="3">
                   <Text style={styles.textSubmitLogin}>Login</Text>
                 </View>
               </TouchableHighlight>
@@ -116,6 +117,10 @@ class App extends React.Component {
             
             <View style={styles.linkLogin} key="1" >
                 <Text style={styles.textLinkLogin} onPress={() => this.props.navigation.navigate('ForgotPassword')} >OLVIDÉ MI CONTRASEÑA</Text>
+            </View>
+
+            <View style={styles.linkLogin} key="2" >
+                <Text style={styles.textLinkLogin} onPress={() => this.props.navigation.navigate('Profile')} >IR A MI PERFIL</Text>
             </View>
           </View>
         </View>
@@ -406,6 +411,9 @@ export default StackNavigator({
     ChangePassword: {
       screen: ChangePassword,
     },
+    Profile: {
+      screen: Profile,
+    }
     /*MainMenu: { 
       screen: MainMenu,
     },*/
