@@ -1,6 +1,6 @@
 /*import React from 'react';
 import { StyleSheet, Text, View, Image, Button, TextInput} from 'react-native';
-import Navigator from './App.js'
+import StackNavigator from './App.js'
 
 
 function Logo(){
@@ -112,7 +112,7 @@ export default class Profile extends React.Component{
           });
         this.setState({errorMessage: !this.state.saved });
         console.log("se hizo el fecth y guardo = "+this.state.saved);  
-        this.navigation.push('Login')  
+        this.navigation.navigate('Login')  
     }
   
     render(){
