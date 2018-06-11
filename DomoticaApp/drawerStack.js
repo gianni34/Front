@@ -5,7 +5,6 @@ import { StyleSheet, Text, View, Image, Button, TextInput, Alert, TouchableHighl
 import DrawerScreen from './drawerScreen.js';
 import { DrawerActions } from 'react-navigation';
 
-
 const DrawerNavigation = createStackNavigator({
     DrawerStack: {screen: DrawerScreen}
 },{
@@ -19,7 +18,7 @@ const DrawerNavigation = createStackNavigator({
         headerTintColor: 'white',
         headerLeft:
         <View>
-            <TouchableHighlight onPress={() => {
+            <TouchableHighlight style={{height: '100%', width:30, justifyContent:'center', alignItems:'center'}} onPress={() => {
                 navigation.dispatch(DrawerActions.toggleDrawer());
                 /*if(navigation.state.index==0){
                     navigation.dispatch(DrawerActions.openDrawer());

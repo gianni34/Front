@@ -4,29 +4,6 @@ import { TabViewAnimated, TabBar, SceneMap } from 'react-native-tab-view';
 import { createStackNavigator } from 'react-navigation';
 //import Profile from './Profile.js'
 
-function LogoLogin(){
-  return (
-    <View style={{flex: 3, backgroundColor: 'transparent'}} >
-
-      <View style={styles.logo}>
-        <Image source={require('./domotica.png')} style={{flex: 1}} resizeMode="contain"/>
-      </View>
-    </View>
-  );
-}
-
-class ErrorMessage extends React.Component {
-  constructor(props){
-    super(props);
-  }
-
-  render(){
-    return (
-      <View style={styles.errorContainer} >
-        <Text style={styles.errorText}>{this.props.message}</Text>
-      </View>);
-  }
-}
 
 class App extends React.Component {
   constructor() {

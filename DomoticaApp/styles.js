@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
 
 export default styles = StyleSheet.create({
 
@@ -61,14 +62,48 @@ export default styles = StyleSheet.create({
       borderBottomWidth: .5,
       borderBottomColor: 'rgb(252, 249, 249)',
       height: 40,
-      margin: 20,
+      marginHorizontal: 20,
+      marginVertical: 10,
     },
 
+    labelContainerLogin: {
+      justifyContent: 'center',
+      marginTop: 20,
+      marginHorizontal: 20,
+      height: 30,
+    },
+
+    inputContainerScene: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderBottomWidth: .5,
+      borderBottomColor: 'rgb(252, 249, 249)',
+      height: 40,
+      marginLeft:20,
+      marginRight:20,
+    },
+    
     adminSwitchContainer:{
       flexDirection: 'row',
       justifyContent: 'center',
       height: 40,
       margin: 20,
+    },
+    
+    dayPickerContainer:{
+      flexDirection: 'row',
+      justifyContent: 'center',
+      height: 40,
+      marginTop: 20,
+      marginLeft: 20,
+      marginRight: 20,
+    },
+
+    timePickerContainer:{
+      margin: 20,
+      height: 40,
+      justifyContent: 'center',
     },
     
     inputIconLogin: {
@@ -84,6 +119,12 @@ export default styles = StyleSheet.create({
     inputLogin:{
       flex:1, 
       paddingLeft: 20, 
+      color: 'rgb(252, 249, 249)',
+      fontSize: 17,
+    },
+
+    labelLogin:{
+      flex:1, 
       color: 'rgb(252, 249, 249)',
       fontSize: 17,
     },
@@ -120,6 +161,7 @@ export default styles = StyleSheet.create({
       alignItems: 'center',
       backgroundColor: 'cyan',
       borderRadius: 5,
+     // width: '100%',
     },
 
     buttonContainerSave: {
@@ -130,14 +172,15 @@ export default styles = StyleSheet.create({
       backgroundColor: 'cyan',
       borderRadius: 5,
     },
-  
-    /*mainMenuTab: {
-      flex: 1,
-      flexDirection: 'column',
+
+    buttonContainerCancel: {
       justifyContent: 'center',
+      margin: 10,
+      height: 50,
       alignItems: 'center',
-      //backgroundColor: 'rgb(22, 43, 59)',
-    },*/
+      backgroundColor: 'gray',
+      borderRadius: 5,
+    },
   
     mainMenuContainer: {
         flex: 1,
@@ -177,6 +220,7 @@ export default styles = StyleSheet.create({
       fontSize: 18,
       color: 'white',
       fontWeight: 'bold',
+      justifyContent: 'center',
     },
   
     zoneName: {
@@ -187,11 +231,27 @@ export default styles = StyleSheet.create({
       fontWeight: 'bold',
       position: "absolute"
     },
+
+    
+    variableName: {
+      marginLeft: 20,
+      marginTop: 5,
+      fontSize: 18,
+      color: 'white',
+      position: "absolute"
+    },
   
     iconContainer: {
       marginTop: 10,
       height: 25,
       width: 25,
+    },
+
+    temperatureValue: {
+      marginTop: 10,
+      marginBottom: 10,
+      fontSize: 60,
+      color: 'white',
     }
   
   
