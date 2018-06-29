@@ -7,6 +7,7 @@ import ForgotPassword from './forgotPassword';
 import SecretAnswer from './secretAnswer';
 import ChangePassword from './changePassword';
 import ZoneScreen from './zone';
+import ActionScreen from './actionScreen';
 
 
 export const AppNav = createStackNavigator({
@@ -14,6 +15,7 @@ export const AppNav = createStackNavigator({
     newUser: {screen: UserScreen, },
     newScene: {screen: SceneScreen, },
     zone: {screen: ZoneScreen},
+    action: {screen: ActionScreen},
 },{
     headerMode: 'screen',
     initialRouteName: 'drawerStack',

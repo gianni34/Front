@@ -1,8 +1,10 @@
+import { AsyncStorage } from 'react-native';
+
 
 export default class Communication {
     constructor(){
-        this.users = [{name:"Ceci", id:1, password:'123456', isAdmin: true, question: '¿Respuesta? resp', answer: 'resp'},
-        {name:"Pali", id:2, password:'123456', isAdmin: false, question: '¿Respuesta? resp', answer: 'resp'},
+        this.users = [{name:"Ceci", id:1, password:'123456', isAdmin: true, question: '¿Respuesta? resp', answer: 'resp', image: 'default.png'},
+        {name:"Pali", id:2, password:'123456', isAdmin: false, question: '¿Respuesta? resp', answer: 'resp', image: ''},
         {name:"Negra", id:3, password:'123456', isAdmin: false, question: '¿Respuesta? resp', answer: 'resp'},
         {name:"Eugi", id:4, password:'123456', isAdmin: false, question: '¿Respuesta? resp', answer: 'resp'}];
         
@@ -12,15 +14,18 @@ export default class Communication {
         { name: 'Pasillo', id:4, type: 'hallway',  },
         { name: 'Living 2', id:5, type: 'living',  }];
         
-        this.scenes = [{ id: 1, name: 'A trabajar', }, 
-        {id: 2, name: 'A la choza', }];
+        this.scenes = [
+        { id: 1, name: 'A trabajar', description: 'Se apaga el aire acondicionado a las 8:30 am de L. a V.', actions: [{id: 1, zoneId: 1, artifactId:3, variableId: 0, value: 0}], onDemand: true, timeCondition: true, days: [0,1,2,3,4], time: '16:00',  },
+        ];
+
+
         
         this.artifacts = [{id: 1, name: 'Luz entrada', zoneId: 1,  on:true, type: 'lightSwitch'}, 
         {id: 2, name: 'Luz sillón', zoneId: 1, on:true, type: 'lightDimmer'}, 
         {id: 3, name: 'Aire tele', zoneId: 1, on:true, type: 'AC'}];
 
-        this.variables = [{id: 1, name: '', artifactId: 2, value: 50, type: 'dimmerSwitch', min:0, max: 100, minIcon: 'light-down', maxIcon: 'light-up'},
-        {id: 2, name: '', artifactId: 3, value: 3, type: 'iconButtons', min: 1, max: 5, minIcon:'', maxIcon: ''},
+        this.variables = [{id: 1, name: 'Intensidad', artifactId: 2, value: 50, type: 'dimmerSwitch', min:0, max: 100, minIcon: 'light-down', maxIcon: 'light-up'},
+        {id: 2, name: 'Modo', artifactId: 3, value: 3, type: 'iconButtons', min: 1, max: 5, minIcon:'', maxIcon: ''},
         {id: 3, name: 'Temperatura', artifactId: 3, value: 22, type: 'dimmerValue', min:16, max: 30, minIcon:'', maxIcon: ''},
         {id: 4, name: 'Ventilador', artifactId: 3, value: 1, type: 'labelButtons', min: 1, max: 3, minIcon:'', maxIcon: ''}
         ]
@@ -56,14 +61,39 @@ export default class Communication {
         return Communication.myInstance;
     }
 
+   /* _getUserId(){
+        const idToken = AsyncStorage.getItem('idToken');
+        return idToken ? parseInt(idToken,10): 0
+    };*/
+
     authenticate(user, password){
         result = this.users.filter(function(obj){
             return obj.name == user && obj.password == password;
         }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, isAdmin};
+            return {id, name};
         });
-        if(result.length == 1){
+        if (result.length == 1){
+            console.log(" authenticate con id "+result[0].id );
             return true;
+            //return {ok:true, id: result[0].id};
+        } else {
+            return false;
+        }
+        //return {ok: false, id: 0};
+    }
+
+    isAdmin(){
+        id = this._getUserId();
+        if (id > 0){
+            console.log(" request isAdmin con id: "+id);
+            result = this.users.filter(function(obj){
+                return obj.id == id;
+            }).map(function({id, name, password, isAdmin, question, answer}){
+                return {id, isAdmin};
+            });
+            if(result.length == 1){
+                return result[0].isAdmin;
+            }
         }
         return false;
     }
@@ -83,7 +113,7 @@ export default class Communication {
     validateSecretAnswer(user, answer){
         result = this.users.filter(function(obj){
             return obj.name == user && obj.answer == answer;
-        }).map(function({id, name, password, isAdmin, question, answer}){
+        }).map(function({name, id, password, isAdmin, question, answer}){
             return {id, name, answer};
         });
         console.log(result);
@@ -132,7 +162,7 @@ export default class Communication {
 
     getUsers(id){
         return this.users.filter(function(obj){
-            return obj.id == id;
+            return obj.id != id;
         }).map(function({id, name, password, isAdmin, question, answer}){
             return {id, name, isAdmin};
         });
@@ -147,11 +177,12 @@ export default class Communication {
     }
 
     getUser(id){
-        return this.users.filter(function(obj){
+        result =this.users.filter(function(obj){
             return obj.id == id;
         }).map(function({id, name, password, isAdmin, question, answer}){
             return {id, name, password, isAdmin};
         });
+        return result[0];
     }
 
     createUser(name, password, isAdmin){
@@ -161,32 +192,46 @@ export default class Communication {
             return {id, name, password, isAdmin};
         });
         if(users.length > 0){
-            return false;
+            console.log(" nombre de usuario ya existe ");
+            return {error: true, message: 'El nombre de usuario ya existe.'};
         }
-        id = this.user[this.users.length - 1].id + 1;
-        user = {name: name, password: password, isAdmin: isAdmin, question: '¿Respuesta? resp', answer: 'resp' };
+        id = 1;
+        if (this.users.length > 0)
+            id = this.users[this.users.length - 1].id + 1;
+        user = {id: id, name: name, password: password, isAdmin: isAdmin, question: '¿Respuesta? resp', answer: 'resp' };
         this.users.push(user);
-        return true;
+        console.log(" usuario creado ");
+        console.log(this.users);
+        return {error: false, message: ''};
     }
 
-    updateUser(id, name, password, isAdmin){
-        users = this.users.filter(function(obj){
-            return obj.name == name && obj.id != id;
+    updateUser(idU, nameU, passwordU, isAdminU){
+        search = this.users.filter(function(obj){
+            return obj.name == nameU && obj.id != idU;
         }).map(function({id, name, password, isAdmin, question, answer}){
             return {id, name, password, isAdmin};
         });
-        if(users.length > 0){
-            return false;
+        console.log(search);
+        if(search.length > 0){
+            return {error: true, message: "El usuario ya existe."};
         }
-        for (user in this.users){
-            if(user.id == id){
-                user.name = name;
-                user.password = password;
-                user.isAdmin = isAdmin
-                return true;
-            }
+        user = this.users.filter(function(obj){
+            return obj.id == idU;
+        }).map(function({id, name, password, isAdmin, question, answer}){
+            return {id, name, password, isAdmin};
+        });
+        if (user.length == 0){
+            console.log("no se encontro.. "+ idU + 'id');
+            return {error: true, message: "No se encontró el usuario, por favor intente nuevamente."};
+        } else {
+            this.users = this.users.map(item => {
+                if(item.id === idU){
+                  return { id: idU, name: nameU, password: passwordU, isAdmin: isAdminU, question: item.question, answer: item.answer  }
+                }
+                return item
+            });
+            return {error: false, message: ''};
         }
-        return false;
     }
 
     deleteUser(id){
@@ -207,13 +252,9 @@ export default class Communication {
         .catch((error) => {
             console.error(error);
         });*/
-        for (obj in this.scenes){
-            if(obj.id == id){
-                console.log(obj);
-                return obj;
-            }
-        }
-        return null;
+        return this.scenes.filter(function(obj){
+            return obj.id == id;
+        })[0];
     }
 
     getArtifacts(zoneId){
@@ -252,28 +293,32 @@ export default class Communication {
         return result[0];
     }
 
-    createScene(name, description, actions, ){
+    saveScene(scene){
         scenes = this.scenes.filter(function(obj){
-            return obj.name == name;
+            return obj.name == scene.name && obj.id != scene.id;
         }).map(function({id, name}){
             return {id, name};
         });
         if(scenes.length > 0){
-            return false;
+            return { result: false, message: "Ya existe una escena con ese nombre."};
         }
-        id = this.user[this.scenes.length - 1].id + 1;
-        scene = {id: id, name: name, description: description, actions: actions, };
-        this.users.push(user);
-        return true;
-    }
-
-    updateScene(){
-
+        if(scene.id == 0){
+            scene.id = this.scenes[this.scenes.length - 1].id + 1;
+            this.scenes.push(scene);
+        } else{
+            this.scenes = this.scenes.map(item => {
+                if(item.id === scene.id){
+                  return scene
+                }
+                return item
+            });
+        }
+        return { result: true, message: '' };
     }
 
     deleteScene(id){
         this.scenes = this.scenes.filter(function(obj){
-            return obj.id !== id;
+            return obj.id != id;
         });
     }
 

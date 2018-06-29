@@ -5,11 +5,43 @@ import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { AppNav, AuthNav } from './navigators';
 import LogIn from './login';
 
+import { AppLoading, Font } from 'expo';
+
+import FontAwesome 
+  from './node_modules/@expo/vector-icons/fonts/FontAwesome.ttf';
+import MaterialIcons  
+  from './node_modules/@expo/vector-icons/fonts/MaterialIcons.ttf';
+  import Entypo 
+  from './node_modules/@expo/vector-icons/fonts/Entypo.ttf';
+import MaterialCommunityIcons  
+  from './node_modules/@expo/vector-icons/fonts/MaterialCommunityIcons.ttf';
+
+
 export class AuthLoadingScreen extends Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+          fontLoaded: false
+        }
+
         this._bootstrapAsync();
       }
+
+      /*async componentWillMount() {
+        try {
+          await Font.loadAsync({
+            FontAwesome,
+            MaterialIcons, 
+            Entypo,
+            MaterialCommunityIcons
+          });
+          this.setState({fontLoaded : true});
+    
+        } catch (error) {
+          console.log('error loading icon fonts', error);
+        }
+      }*/
     
       // Fetch the token from storage then navigate to our appropriate place
       _bootstrapAsync = async () => {
@@ -22,9 +54,10 @@ export class AuthLoadingScreen extends Component {
     
       render() {
         return (
-          <View />
+            <View />
         );
-    }
+        
+      }
 }
   
 export default createSwitchNavigator(

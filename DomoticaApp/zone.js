@@ -6,6 +6,7 @@ import styles from './styles';
 import { LogoLogin, ErrorMessage } from './commons';
 import Communication from './communication';
 import Artifact from './artifact';
+import { FontLoader } from './fontLoader';
 
 
 export default class ZoneScreen extends Component {
@@ -42,7 +43,8 @@ export default class ZoneScreen extends Component {
     render(){
         const { errorMessage } = this.state;
         return(
-            <ScrollView style={{flex:1, backgroundColor: 'rgb(204, 204, 204)'}}>
+            <FontLoader>
+                <ScrollView style={{flex:1, backgroundColor: 'rgb(204, 204, 204)'}}>
                 <View style={{flex: 1, flexDirection: 'column', backgroundColor: 'transparent', paddingTop:5 }}>
                 
                     { /* this.zone.state.length > 0 && (
@@ -65,8 +67,9 @@ export default class ZoneScreen extends Component {
                         <Artifact handler={this.refresh} key={item.id} id={item.id}/>)
                     }
 
-                </View>
-            </ScrollView>
+                    </View>
+                </ScrollView>
+                </FontLoader>
         );
     }
 }

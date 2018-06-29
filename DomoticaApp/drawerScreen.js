@@ -1,15 +1,19 @@
-import { createDrawerNavigator } from 'react-navigation';
-import React from 'react';
+import { createSwitchNavigator, createDrawerNavigator } from 'react-navigation';
+import React, { Component } from 'react';
 import { StyleSheet, Text, View, Image, Button, TextInput, Alert, TouchableHighlight, Dimensions, ScrollView, ImageBackground } from 'react-native';
 
 import Home from './home';
+import Profile from './profile';
 import Users from './users';
 import Scenes from './scenes';
 import LogOut from './logout';
 
-import { Slider } from 'react-native';
+import { Slider, AsyncStorage } from 'react-native';
+import Communication from './communication';
 
-class Profile extends React.Component{
+    
+
+/*class Profile extends React.Component{
     constructor(props){
         super(props);
 
@@ -48,6 +52,7 @@ class Profile extends React.Component{
     }
 };
 
+
 var styleSlider = StyleSheet.create({
     track: {
         height: 30,
@@ -58,7 +63,15 @@ var styleSlider = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: 'cyan',
       }
-})
+})*/
+
+const DrawerScreenUSer = createDrawerNavigator({
+    Home: {screen:Home, navigationOptions: { title: 'Inicio' } },
+    Profile: {screen:Profile, navigationOptions: { title: 'Perfil' } },
+    LogOut: {screen:LogOut, navigationOptions: { title: 'Cerrar sesión', headerTitle: 'Cerrar sesión' }}, 
+},{
+    headerMode: 'none'
+});
 
 const DrawerScreen = createDrawerNavigator({
     Home: {screen:Home, navigationOptions: { title: 'Inicio' } },
@@ -68,6 +81,7 @@ const DrawerScreen = createDrawerNavigator({
     LogOut: {screen:LogOut, navigationOptions: { title: 'Cerrar sesión', headerTitle: 'Cerrar sesión' }}, 
 },{
     headerMode: 'none'
-})
+});
 
-export default DrawerScreen;
+
+export default  DrawerScreen;

@@ -1,7 +1,7 @@
 import React, {Component} from "react";
-import { Text, View, Image, Alert, TouchableHighlight, ScrollView, TextInput } from 'react-native';
+import { Text, View, Image, Alert, TouchableHighlight, ScrollView, Switch, TextInput } from 'react-native';
 import { Icon } from 'react-native-elements';
-import ToggleSwitch from 'toggle-switch-react-native'
+//import ToggleSwitch from 'toggle-switch-react-native'
 
 import styles  from './styles';
 import Communication from "./communication";
@@ -25,9 +25,9 @@ export default class UserScreen extends Component {
 
         this.state = {
             user: {},
-            name: "",
-            password: "",
-            passwordRepeat: "",
+            name: '',
+            password: '',
+            passwordRepeat: '',
             isAdmin: false,
             errorMessage: false,
             message: 'Se produjo un problema, por favor intente nuevamente.',
@@ -41,12 +41,14 @@ export default class UserScreen extends Component {
     componentWillMount(){
         this.state.id = this.props.navigation.getParam('userId', 0);
         if (this.state.id > 0) {
-            this.state.user  = Communication.getInstance().getUser(this.state.id);
-            if(this.state.user){
-                this.state.name = this.state.user.name;
-                this.state.password = this.state.user.password;
-                this.state.passwordRepeat = this.state.user.password;
-                this.state.isAdmin = this.state.user.isAdmin;
+            user  = Communication.getInstance().getUser(this.state.id);
+            if (user){
+                this.state.user = user;
+                this.state.name = user.name;
+                this.state.password = user.password;
+                this.state.passwordRepeat = user.password;
+                this.state.isAdmin = user.isAdmin;
+                console.log('datos levantados '+ this.state.name);
             }
         }
     }
@@ -72,19 +74,34 @@ export default class UserScreen extends Component {
         this.setState({passwordRepeat: password});
     }
 
-    saveUser(){
+    changeIsAdmin(isAdmin){
         if(this.state.id > 0){
-            Communication.getInstance().updateUser(this.state.id, this.state.name, this.state.password, this.state.isAdmin);         
-        } else {
-            Communication.getInstance().createUser(this.state.name, this.state.password, this.state.isAdmin);
+            this.state.changed = this.state.user.isAdmin != isAdmin || this.state.user.password != this.state.password || this.state.user.name != this.state.name || this.state.user.password != this.state.password;
         }
-        this.props.navigation.goBack();
+        this.setState({isAdmin: isAdmin});
     }
 
+    saveUser(){
+        if (this.state.id > 0){
+            result = Communication.getInstance().updateUser(this.state.id, this.state.name, this.state.password, this.state.isAdmin);         
+            console.log("update");
+        } else {
+            result = Communication.getInstance().createUser(this.state.name, this.state.password, this.state.isAdmin);
+        }
+        if (result.error){
+            this.setState({message: result.message, errorMessage: result.error});
+        } else {
+            this.props.navigation.state.params.refresh();
+            this.props.navigation.goBack();
+        }
+    }
+
+    
     render(){
-        const { name, password, passwordRepeat, isAdmin, errorMessage } = this.state;
+        const { id, name, password, passwordRepeat, isAdmin, errorMessage, changed } = this.state;
+        //validData = name && password.length > 4 && password==passwordRepeat;
         validData = name.length > 0 && password.length > 4 && password==passwordRepeat;
-        this.state.submittable = (this.state.changed && this.state.id > 0 || this.state.id == 0) && validData;
+        this.state.submittable = (changed && id > 0 || id == 0) && validData;
         submittable = this.state.submittable;
         return(
             <ScrollView style={{flex: 1, flexDirection: 'column', backgroundColor: 'rgb(204, 204, 204)', paddingTop:5 }}>
@@ -132,13 +149,12 @@ export default class UserScreen extends Component {
                     </View>
                     <View style={styles.adminSwitchContainer}>
                         <Text style={styles.inputLogin}>Administrador</Text>
-                        <ToggleSwitch
-                            isOn={isAdmin}
-                            onColor='cyan'
-                            offColor='rgb(204, 204, 204)'
-                            size='small'
-                            onToggle={(isAdmin) => this.changeIsAdmin(isAdmin)}
-                        />                       
+                        <Switch
+                            value={isAdmin}
+                            onTintColor='cyan'
+                            tintColor='rgb(204, 204, 204)'
+                            onValueChange={(isAdmin) => this.changeIsAdmin(isAdmin)}
+                        />                      
                     </View>
                 </View>
                 { submittable && (

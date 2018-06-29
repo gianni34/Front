@@ -14,6 +14,8 @@ import Menu, {
     renderers,
 } from 'react-native-popup-menu';
 
+import { FontLoader } from './fontLoader';
+
 class MoreMenu extends Component {
     constructor(props){
         super(props);
@@ -29,10 +31,10 @@ class MoreMenu extends Component {
                     </View>
                 </MenuTrigger>
                 <MenuOptions style={{ backgroundColor:'rgb(204, 204, 204)'}}>
-                    <MenuOption value={1} style={{height: 40, justifyContent: 'center'}} onSelect={() => this.props.navigation.navigate('newUser', { userId: this.props.id })}>
+                    <MenuOption value={1} style={{height: 40, justifyContent: 'center'}} onSelect={() => this.props.navigation.navigate('newUser', { userId: this.props.id, refresh: this.props.refresh })}>
                         <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Editar</Text>
                     </MenuOption>
-                    <MenuOption value={2} style={{height: 40, justifyContent: 'center'}} onSelect={() => Alert.alert('¿Desea eliminar el usuario?',                                                                                              { cancelable: false })}>
+                    <MenuOption value={2} style={{height: 40, justifyContent: 'center'}} onSelect={() => Alert.alert('¿Desea eliminar el usuario?', { cancelable: false })}>
                         <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Eliminar</Text>
                     </MenuOption>
                 </MenuOptions>
@@ -61,7 +63,7 @@ class Block extends Component {
                     <Text style={styles.whiteText}>{this.props.name}</Text>
                 </View>
                 <View style={{backgroundColor: 'transparent', height: '100%', width:'10%', justifyContent: 'center', alignItems: 'center'}}>
-                   <MoreMenu id={this.props.id} navigation={this.props.navigation} handler={this.deleteUser} />
+                   <MoreMenu id={this.props.id} navigation={this.props.navigation} handler={this.deleteUser} refresh={this.props.refresh} />
                 </View>
             </View>
         );
@@ -84,6 +86,8 @@ export default class Users extends Component {
             users: [],
             refresh: false,
         }
+
+        this.refreshScreen = this.refreshScreen.bind(this);
     }
     
     customBackHandler = (instance) => {
@@ -97,19 +101,26 @@ export default class Users extends Component {
         this.setState({refresh: true});
     }
 
+    refreshScreen(){
+        this.setState({refresh: true});
+    }
+
     render(){
         this.state.users = Communication.getInstance().getUsers();
         return(
             <MenuProvider backHandler={this.customBackHandler}>
+                <FontLoader>
                 <ScrollView style={{flex: 1, backgroundColor: 'rgb(204, 204, 204)', paddingTop:10 }}>
                 {this.state.users.map(item =>
                         <View style={{ height:70, marginTop:10, marginHorizontal:10 }} key={item.id}>
-                            <Block name={item.name} key={item.id} id={item.id} navigation={this.props.navigation} handler={this.deleteUser}/>
+                            <Block name={item.name} key={item.id} id={item.id} navigation={this.props.navigation} handler={this.deleteUser} refresh={this.refreshScreen}/>
                         </View>)}
                 <View style={{height:100, width:'100%'}}/>
                 </ScrollView>
-                <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.props.navigation.push('newUser')} 
-                                        renderIcon={() => <Icon theme={{ iconFamily: 'FontAwesome' }} name='plus' size={40} color='black'/>}/>
+                </FontLoader>
+                <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.props.navigation.push('newUser', { refresh: this.refreshScreen})} 
+                                        renderIcon={() => <Icon theme={{ iconFamily: 'FontAwesome' }} name='add' size={25} color='white'/>}/>
+                
             </MenuProvider>
         );
     }

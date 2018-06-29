@@ -5,6 +5,7 @@ import { Body, Header, List, ListItem as Item, ScrollableTab, Tab, Tabs, Title, 
 import styles  from './styles';
 import Block from './Menu';
 import Communication from './communication';
+import { MenuProvider } from 'react-native-popup-menu';
 
 const NAVBAR_HEIGHT = 0;
 const {width: SCREEN_WIDTH} = Dimensions.get("window");
@@ -129,9 +130,11 @@ export default class Home extends Component {
               </Tab>
               <Tab heading="ESCENAS" style={styles.mainMenuTab} {...TAB_PROPS}>
                   {
+                    <MenuProvider>
                       <View style={{ height:70, marginTop:10, marginHorizontal:10 }}>
                         <Block name="Ceci"/>
                       </View>
+                      </MenuProvider>
                   }
               </Tab>
             </Tabs>

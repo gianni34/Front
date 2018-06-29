@@ -1,32 +1,13 @@
-/*import React from 'react';
-import { StyleSheet, Text, View, Image, Button, TextInput} from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, Image, Button, ScrollView, TextInput, TouchableHighlight } from 'react-native';
+import { Icon } from 'react-native-elements';
+import ActionButton from 'react-native-action-button';
 import Navigator from './App.js'
 
-
-function Logo(){
-    return (
-      <View style={{flex: 3, backgroundColor: 'transparent'}} >
-  
-        <View style={stylesP.logo}>
-          <Image source={require('./domotica.png')} style={{flex: 1}} resizeMode="contain"/>
-        </View>
-      </View>
-    );
-  }
-  
-
-class ErrorMessage extends React.Component {
-    constructor(props){
-      super(props);
-    }
-  
-    render(){
-      return (
-        <View style={stylesP.errorContainer} >
-          <Text style={stylesP.errorText}>{this.props.message}</Text>
-        </View>);
-    }
-}
+import { ErrorMessage } from './commons';
+import Communication from './communication';
+import { MenuProvider } from 'react-native-popup-menu';
+import { FontLoader } from './fontLoader';
 
 export default class Profile extends React.Component{
     constructor() {
@@ -46,36 +27,26 @@ export default class Profile extends React.Component{
             errorMessage: false,
             profile: false,
             saved: false,
+            editable: false,
         };
   
         this.handleChange = this.handleChange.bind(this);
-        this.handleLogedIn = this.handleLogedIn.bind(this);
         this.handleSave = this.handleSave.bind(this);
     }
   
     componentWillMount(){
-        fetch("http://192.168.0.34:8000/user/1/")
+       /* fetch("http://192.168.0.34:8000/user/1/")
         .then(response => {return response.json()})
         .then((json) => this.setState(
             {userId: json.id, name: json.name, role: json.role, password: json.password, passwordConfirmation: json.password, secretQuestion: json.question, secretAnswer: json.answer, submittable: true}))
         .catch((error) => {
             console.log(error.message);
-            });
-    }
-  
-  
-    handleLogedIn(e){
-        const {name, value} = e.target;
-        this.setState({[name]: value});
-        this.setState({submittable: false});
-        fetch("http://192.168.0.34:8000/logged/"+this.state.name+"/")
-        .then(response => {return response.json()})
-        .then((json) => this.setState({ logedIn: json.result }))
-        .catch((error) => {
-            console.log(error.message);
-          });
-        this.setState({errorMessage: !this.state.logedIn });
-        console.log("esta logueado");
+            });*/
+        user = Communication.getInstance().getUser(1);
+        this.state.id = user.id;
+        this.state.name = user.name;
+        this.state.password = user.password;
+        this.state.passwordConfirmation = user.password;
     }
   
     handleChange(e) {
@@ -93,7 +64,7 @@ export default class Profile extends React.Component{
     }
   
     handleSave(e) {
-        e.preventDefault();
+        /*e.preventDefault();
         console.log("llego a handle de save");
         this.state.data = '{"name": "'+this.state.name+'", "password": "'+this.state.password+'", "question": "'+this.state.secretQuestion+'", "answer": "'+this.state.secretAnswer+'"}'
         const { name, value } = e.target;
@@ -112,17 +83,35 @@ export default class Profile extends React.Component{
           });
         this.setState({errorMessage: !this.state.saved });
         console.log("se hizo el fecth y guardo = "+this.state.saved);  
-        this.navigation.push('Login')  
+        this.navigation.push('Login')  */
+    }
+
+    cancelEdit(){
+        user = Communication.getInstance().getUser(1);
+        this.state.id = user.id;
+        this.state.name = user.name;
+        this.state.password = user.password;
+        this.state.passwordConfirmation = user.password;
+        this.setState({editable: false});
     }
   
     render(){
-      const { name, errorMessage, password, passwordConfirmation,secretQuestion, secretAnswer, submittable } = this.state;
-      return (
-            <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
-                <View style={{flex: 2, backgroundColor: 'transparent', alignItems: 'center'}} >    
+      const { name, editable, errorMessage, password, passwordConfirmation,secretQuestion, secretAnswer, submittable } = this.state;
+      return(
+              <FontLoader>
+        <ScrollView style={{flex: 1, flexDirection: 'column', backgroundColor: 'rgb(204, 204, 204)', paddingVertical:10 }}>
+            <View style={{ flex:1, flexDirection:'column', padding: 5, backgroundColor: 'rgb(127, 127, 127)', marginHorizontal: 10, paddingBottom: 10, borderRadius:10, borderWidth: 1, borderColor: 'transparent', overflow: 'hidden'}}>
+            
+                <View style={{marginVertical: 20, alignItems: 'center', justifyContent: 'center'}}>
+                    <View style={{height: 200, width:200, borderRadius: 100, borderWidth:0.5, borderColor: 'rgb(100, 100, 100)', backgroundColor: 'white'}}>
+                        <Image source={require('./images/default2.png')} style={{flex: 1, height: 200, width:200, borderRadius:100}} reziseMode="cover"/>
+                    </View>
+                </View>
+
                 { errorMessage && (
-                    <ErrorMessage message={this.state.message}/>)
-                }           
+                    <View style={{marginTop:20}}>
+                    <ErrorMessage message={this.state.message}/></View>)
+                }             
                     <View style={stylesP.inputContainerProfile}>
                         <Image source={require('./userIcon.png')} style={stylesP.inputIconProfile} />
                 
@@ -132,6 +121,7 @@ export default class Profile extends React.Component{
                             placeholder="Usuario"
                             placeholderTextColor="rgb(202, 199, 199)"
                             underlineColorAndroid="transparent"
+                            editable={this.state.editable}
                             onChangeText={(name) => this.setState({name: name})}
                         />    
                     </View>
@@ -145,6 +135,7 @@ export default class Profile extends React.Component{
                             placeholderTextColor='rgb(199, 199, 199)'
                             underlineColorAndroid="transparent"
                             secureTextEntry={true}
+                            editable={this.state.editable}
                             onChangeText={(password) => this.setState({password: password})}
                         />
                     </View>
@@ -153,11 +144,12 @@ export default class Profile extends React.Component{
                         <Image source={require('./psswrdIcon.png')} style={stylesP.inputIconProfile} />
                         <TextInput
                             style={stylesP.inputProfile}
-                            value={this.state.password}
+                            value={this.state.passwordConfirmation}
                             placeholder="Confirmacion de Contraseña"
                             placeholderTextColor='rgb(199, 199, 199)'
                             underlineColorAndroid="transparent"
                             secureTextEntry={true}
+                            editable={this.state.editable}
                             onChangeText={(passwordConfirmation) => this.setState({passwordConfirmation: passwordConfirmation})}
                         />
                     </View>
@@ -181,19 +173,36 @@ export default class Profile extends React.Component{
                             placeholder="Respuesta"
                             placeholderTextColor='rgb(199, 199, 199)'
                             underlineColorAndroid="transparent"
+                            editable={this.state.editable}
                             onChangeText={(secretAnswer) => this.setState({secretAnswer: secretAnswer})}
                         />
                     </View>
 
-                    { submittable && (
-                    <TouchableHighlight onPress={() => this.handleSave} underlayColor='rgb(22, 43, 59)'>
-                    <View style={stylesP.buttonContainer} key="2">
-                    <Text style={stylesP.textSubmitProfile}>Guardar</Text>
-                    </View>
-                    </TouchableHighlight>
-                    )} 
+                     
+
+                 
                 </View>
-            </View>       
+                { editable && submittable && (
+                    <TouchableHighlight onPress={this.handleSave} underlayColor='transparent'>
+                    <View style={[styles.buttonContainerSave, {marginBottom:10}]}>
+                        <Text style={styles.textSubmitLogin}>Guardar</Text>
+                    </View>
+                </TouchableHighlight>
+                    )}
+                   {!editable &&
+                   <View style={{height:100, width:'100%'}}/>}
+                   {!editable &&
+                    <View style={{height:100, width:'100%'}}/>}
+            </ScrollView>
+            { !editable &&
+                        <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.setState({editable: true})} 
+                        renderIcon={() => <Icon name='edit' size={25} color='white'/>}/>
+                    }
+                    { editable &&
+                        <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.cancelEdit()} 
+                        renderIcon={() => <Icon name='undo' size={25} color='white'/>}/>
+                    }
+                    </FontLoader>
           );
     }
   }
@@ -309,4 +318,4 @@ const stylesP = StyleSheet.create({
         borderRadius: 5,
       },
   
-  });*/
+  });

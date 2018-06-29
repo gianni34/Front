@@ -1,28 +1,28 @@
 import React, { Component } from 'react';
 import { Dimensions, Text, View, Image, TextInput, TouchableHighlight, TouchableOpacity, Switch, Slider } from 'react-native';
-import { FontAwesome, Entypo, MaterialIcons, MaterialCommunityIcons } from 'react-native-vector-icons';
 import { Icon } from 'react-native-elements';
 
 import styles from './styles';
 import Communication from './communication';
+import { FontLoader } from './fontLoader';
 
 class IconButton extends Component{
     constructor(props){
         super(props);
-        
+
     }
-    
+
     render(){
         if (this.props.type == 'heat')
-            return (<MaterialIcons name='wb-sunny' color={this.props.color} size={30}/>);
+            return (<Icon type='material-icons' name='wb-sunny' color={this.props.color} size={30}/>);
         if (this.props.type == 'cool')
-            return (<FontAwesome name='snowflake-o' color={this.props.color} size={30} />);
+            return (<Icon type='font-awesome' name='snowflake-o' color={this.props.color} size={30} />);
         if (this.props.type == 'dry')
-            return (<Entypo name='drop' color={this.props.color} size={30}/>);
+            return (<Icon type='entypo' name='drop' color={this.props.color} size={30}/>);
         if (this.props.type == 'fan')
-            return (<MaterialCommunityIcons name='fan' color={this.props.color} size={30} />);
+            return (<Icon type='material-community' name='fan' color={this.props.color} size={30} />);
         if (this.props.type == 'auto')
-            return (<MaterialIcons name='autorenew' color={this.props.color} size={30}/>);
+            return (<Icon theme={{ iconFamily: 'MaterialIcons' }} name='autorenew' color={this.props.color} size={30}/>);
         
     }
 }
@@ -190,7 +190,7 @@ export default class Variables extends Component {
             return (
                 <View style={{ flexDirection: 'row', height: 40, width: '100%' }}>
                     {/*this.state.variable.name.length > 0 && <View><Text>{this.state.variable.name}</Text></View>*/}
-                            <Entypo name='light-down' color='white' size={30} onPress={this.less}/>
+                            <Icon type='entypo' name='light-down' color='white' size={30}  onPress={this.less}/>
                             <Slider
                                 minimumTrackTintColor='cyan'
                                 maximumTrackTintColor='white'
@@ -209,7 +209,8 @@ export default class Variables extends Component {
                                 maximumValue={this.state.variable.max}
                                 onValueChange={value => this.changeValue(value)}
                             />
-                            <Entypo name='light-up' color='white' size={30} onPress={this.more}/>
+                            <Icon type='entypo' name='light-up' color='white' size={30}  onPress={this.more}/>
+                            
                    
                 </View>
                 );
@@ -259,7 +260,7 @@ export default class Variables extends Component {
                 <View style={{ marginBottom: 10, flexDirection: 'column' }}>
                     <View style={{alignItems: 'center', justifyContent: 'center'}}><Text style={styles.temperatureValue}>{this.state.value.toFixed(0)} °C</Text></View>
                     <View style={{flexDirection:'row', alignItems: 'center', justifyContent: 'center', }}>
-                        <Entypo name='minus' color='white' size={30} onPress={this.minus}/>
+                        <Icon type='entypo' name='minus' color='white' size={30}  onPress={this.minus}/>
                         
                         <Slider
                             minimumTrackTintColor='cyan'
@@ -279,8 +280,7 @@ export default class Variables extends Component {
                             maximumValue={this.state.variable.max}
                             onValueChange={value => this.changeValue(value)}
                         />
-                        
-                        <Entypo name='plus' color='white' size={30} onPress={this.plus} />
+                        <Icon type='entypo' name='plus' color='white' size={30}  onPress={this.plus}/>
                                                 
                     </View>
                     <View style={{ margin:10, justifyContent: 'center', alignItems: 'center'}}>

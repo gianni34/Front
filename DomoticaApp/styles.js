@@ -153,6 +153,16 @@ export default styles = StyleSheet.create({
       backgroundColor: 'transparent',
       fontSize: 16,
     },
+
+    textSubmitCancel: {
+      alignItems: 'center',
+      color: 'rgb(204, 204, 204)',
+      borderColor: 'white',
+      borderRadius: 5,
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+      fontSize: 16,
+    },
   
     buttonContainer: {
       justifyContent: 'center',

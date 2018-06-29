@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, TextInput, Switch } from 'react-native';
-import styles from './styles.js';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TouchableHighlight, Dimensions, TextInput, Switch } from 'react-native';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import ToggleSwitch from 'toggle-switch-react-native';
+import { Icon } from 'react-native-elements';
+import ActionButton from 'react-native-action-button';
+
+import { ErrorMessage } from './commons';
+import Communication from './communication';
+import { FontLoader } from './fontLoader';
+import styles from './styles.js';
 
 const NAVBAR_HEIGHT = 0;
 const DAY_WIDTH = (Dimensions.get("window").width - 30)/7 - 15;
@@ -11,32 +17,37 @@ const GRAY_LIGHT = 'rgb(204, 204, 204)';
 const GRAY_DARK = 'rgb(127, 127, 127)';
 const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-class ErrorMessage extends Component {
-    constructor(props){
-      super(props);
-    }
-  
-    render(){
-      return (
-        <View style={styles.errorContainer} >
-          <Text style={styles.errorText}>{this.props.message}</Text>
-        </View>);
-    }
-}
-
-
 function getParsedTime(date){
     date = String(date).split(' ');
     var hours = String(date[4]).split(':');
     return hours[0] + ':' + hours[1];
+
+}
+
+function capitalizeText(text){
+    return text.slice(0,1).toUpperCase() + text.slice(1, text.length).toLowerCase();
+}
+
+function getValueLabel(value, variableId, type=""){
+    if (variableId == 0){
+        return value==0?'Apagado':'Prendido';
+    }
+    else if (type == 'iconButtons' || type == 'labelButtons'){
+        ranges = Communication.getInstance().getRanges(variableId);
+        res = ranges.filter(function(obj){
+            return obj.id == value;
+        })[0];
+        value = capitalizeText(res.name);
+    }
+    return value;
 }
 
 export default class SceneScreen extends Component{
-
     constructor(props){
         super(props);
     
         this.state = {
+            id: 0,
             days: [
                 {id: 0, letter: 'L', pressed: false, iconColor: 'transparent', textColor: 'white'},
                 {id: 1, letter: 'M', pressed: false, iconColor: 'transparent', textColor: 'white'},
@@ -60,12 +71,58 @@ export default class SceneScreen extends Component{
             /*valueCondition: false,
             valueConditionText: 'Agregar condición de valor',
             valueConditionDescription: 'Esta escena se ejecutará cuando se cumpla la siguiente condición de valor sobre un artefacto de forma automática',*/
-            isDateTimePickerVisibleS: false,
-            isDateTimePickerVisibleE: false,
-            timeStart : getParsedTime(new Date()),
-            //endTimeCondition:  false;
-            timeEnd : getParsedTime(new Date()),
+            isDateTimePickerVisible: false,
+            time : getParsedTime(new Date()),
+            edit: true,
         }
+
+        this.changeValue = this.changeValue.bind(this);
+        this._validateDays = this._validateDays.bind(this);
+        this.createAction = this.createAction.bind(this);
+        this.updateAction = this.updateAction.bind(this);
+        this.deleteAction = this.deleteAction.bind(this);
+        this.goToEditAction = this.goToEditAction.bind(this);
+        this.delete = this.delete.bind(this);
+        
+    }
+
+    static navigationOptions = ({navigation}) => ({
+        title: 'Escena',
+        headerRight:
+        <View>
+        { navigation.getParam('id', 0) != 0 && 
+        <TouchableOpacity style={{marginRight: 20}} onPress={() => {Alert.alert('¿Desea eliminar la escena?',
+            'Confirme',
+            [
+                {text: 'Cancelar', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+                {text: 'Aceptar', onPress: () => {navigation.state.params.handleDelete()}},
+            ],
+            { cancelable: false })}}>
+        <Icon name='delete' color='white' size={25}/>
+        </TouchableOpacity>}
+        </View>
+    });
+
+    componentWillMount(){
+        this.state.id = this.props.navigation.getParam('id', 0);
+        if (this.state.id > 0){
+            scene = Communication.getInstance().getScene(this.state.id);
+            this.state.name = scene.name;
+            this.state.description = scene.description;
+            this.state.onDemand = scene.onDemand;
+            this.state.timeCondition = scene.timeCondition;
+            this.state.time = scene.time;
+            this.state.actions = scene.actions;
+            this.state.days = this.state.days.map(item => { 
+                if (scene.days.filter(function(obj){ return obj == item.id; }).length > 0){ 
+                    return { id: item.id, letter: item.letter, pressed: true, iconColor: 'white', textColor: GRAY_DARK };
+                } else { 
+                    return item 
+                } 
+            });
+            this.state.edit = this.props.navigation.getParam('edit', false);
+        }
+        this.props.navigation.setParams({ id: this.state.id, handleDelete: this.delete });    
     }
 
     changeValue(x, days){
@@ -80,26 +137,22 @@ export default class SceneScreen extends Component{
         this.setState({days: days});
     }
 
-    _showDateTimePickerS = () => this.setState({ isDateTimePickerVisibleS: true });
- 
-    _hideDateTimePickerS = () => this.setState({ isDateTimePickerVisibleS: false });
-    
-    _handleDatePickedS = (date) => {
-        time = getParsedTime(date);
-        console.log('A date has been picked: ', time);
-        this.setState({timeStart: time});
-        this._hideDateTimePicker();
-    };
+    changeTimeCondition(value){
+        if (value){
+            this._showDateTimePicker();
+        }
+        this.setState({timeCondition: value});
+    }
 
-    _showDateTimePickerE = () => this.setState({ isDateTimePickerVisibleE: true });
+    _showDateTimePicker = () => this.setState({ isDateTimePickerVisible: true });
  
-    _hideDateTimePickerE = () => this.setState({ isDateTimePickerVisibleE: false });
+    _hideDateTimePicker = () => this.setState({ isDateTimePickerVisible: false });
     
-    _handleDatePickedE = (date) => {
+    _handleDatePicked = (date) => {
         time = getParsedTime(date);
         console.log('A date has been picked: ', time);
-        this.setState({timeEnd: time});
-        this._hideDateTimePickerE();
+        this.setState({time: time});
+        this._hideDateTimePicker();
     };
 
     updateSize = (height) => {
@@ -107,40 +160,100 @@ export default class SceneScreen extends Component{
     }
 
     _validateDays(){
-        result = this.stateDays.filter(function(obj){
+        result = this.state.days.filter(function(obj){
             return obj.pressed;
-        }).map(function({id, letter, pressed}){
-            return {id, letter, pressed};
+        }).map(function({id, letter}){
+            return {id, letter};
         });
-        return result.length > 0;
-    }
-
-    _validateEndTime(){
-        return true;
+        return result.length;
     }
 
     _validateData(){
-        return ((this.state.timeCondition  && this._validateDays() && this_.validateEndTime()) 
+        return ((this.state.timeCondition  && this._validateDays()) 
                 || this.state.onDemand) && this.state.actions.length > 0 && this.state.name.length > 0;
     }
 
+    delete(){
+        this.props.navigation.state.params.delete(this.props.navigation.state.params.id);
+        this.props.navigation.goBack();
+    }
+
+    createAction(action){
+        try {
+            id = 1;
+            if (this.state.actions.length > 0)
+                id = this.state.actions[this.state.actions.length - 1].id + 1;
+            action.id = id;
+            this.state.actions.push(action);
+            console.log("-------------- se agrego! -------------")
+            this.setState({actions: this.state.actions});
+            
+            return true;
+        } catch (e){
+            console.log(e);
+        }
+    }
+
+    updateAction(action){
+        try {
+            actions = this.state.actions.map(item => {
+                    if(item.id === action.id){
+                      return action
+                    }
+                    return item
+            });
+            this.setState({actions: actions});
+            return true;
+        } catch (e){
+            return false;
+        }
+    }
+
+    deleteAction(id){
+        try {
+            actions = this.state.actions.filter(function(obj){
+                return obj.id != id;
+            }).map(function({id, zoneId, artifactId, variableId, value}){
+                return {id, zoneId, artifactId, variableId, value};
+            });
+            this.setState({actions: actions});
+        } catch (e){
+            return false;
+        }
+    }
+
     handleSubmit(){
-        if (Communication.getInstance().saveScene()){
+        days = this.state.days.filter(function(obj){
+            return obj.pressed
+        }).map(item => {
+            return item.id
+        });
+        console.log("days -- "+days)
+        scene = { id: this.state.id, name: this.state.name, description: this.state.description, actions: this.state.actions, onDemand: this.state.onDemand, timeCondition: this.state.timeCondition, days: days, time: this.state.time };
+        response = Communication.getInstance().saveScene(scene);
+        if (response.result) {
             this.props.navigation.goBack();
         } else {
-            this.setState({errorMessage: true});
+            this.setState({errorMessage: true, message: response.message });
         }
+    }
+
+    goToEditAction(action){
+        this.props.navigation.push('action', {action: action, save: this.updateAction, 
+            delete: this.deleteAction});
     }
 
     render(){
         timeAux = this.state.time;
-        time = timeAux.toString();
-        const { onDemand, onDemandText, valueCondition, valueConditionText, timeCondition, timeConditionText } = this.state;
+        time = timeAux;
+        this.state.submittable = this._validateData();
+        const { edit, onDemand, onDemandText, submittable, valueCondition, valueConditionText, timeCondition, timeConditionText } = this.state;
         errorMessage = this.state.errorMessage;
-        submittable = this._validateData();
+        console.log(this.state.actions);
         return(
-            <ScrollView style={{flex: 1, flexDirection: 'column', backgroundColor: 'rgb(204, 204, 204)', paddingTop:5 }}>
-                <View style={{ flex:1, flexDirection:'column', padding: 5, backgroundColor: 'rgb(127, 127, 127)', margin:5, borderRadius:10, borderWidth: 1, borderColor: 'transparent', overflow: 'hidden'}}>
+            <FontLoader>
+            <ScrollView style={{flex: 1, flexDirection: 'column', backgroundColor: 'rgb(204, 204, 204)' }}>
+                <View style={{ flex:1, flexDirection:'column', padding: 5, backgroundColor: 'rgb(127, 127, 127)', margin:10, borderRadius:10, borderWidth: 1, borderColor: 'transparent', overflow: 'hidden'}}>
                 
                     { errorMessage && (
                         <View style={{marginTop:20}}>
@@ -162,6 +275,7 @@ export default class SceneScreen extends Component{
                                     placeholderTextColor="rgb(202, 199, 199)"
                                     underlineColorAndroid="transparent"
                                     onChangeText={(name) => this.setState({name: name})}
+                                    editable={edit}
                                 />
                             </View>
                         </View>
@@ -189,6 +303,7 @@ export default class SceneScreen extends Component{
                                     underlineColorAndroid="transparent"
                                     onChangeText={(description) => this.setState({description: description})}
                                     onContentSizeChange={(e) => this.updateSize(e.nativeEvent.contentSize.height)}
+                                    editable={edit}
                                 />
                             </View>
                         </View>
@@ -205,6 +320,7 @@ export default class SceneScreen extends Component{
                             onTintColor='cyan'
                             tintColor='rgb(204, 204, 204)'
                             onValueChange={(onDemand) => this.setState({onDemand: onDemand})}
+                            disabled={!edit}
                         />                       
                         </View>
                     </View>
@@ -226,7 +342,8 @@ export default class SceneScreen extends Component{
                             value={this.state.timeCondition}
                             onTintColor='cyan'
                             tintColor='rgb(204, 204, 204)'
-                            onValueChange={(timeCondition) => this.setState({timeCondition: timeCondition})}
+                            onValueChange={(timeCondition) => this.changeTimeCondition(timeCondition)}
+                            disabled={!edit}
                         />                       
                         </View>
                     </View>
@@ -239,7 +356,7 @@ export default class SceneScreen extends Component{
                         {
                             this.state.days.map((item) =>
                             <View key = {item.id} style = {{flex:1, justifyContent: 'center', alignItems: 'center'}}>
-                                    <TouchableOpacity onPress={ () => this.changeValue(item, this.state.days)}
+                                    <TouchableOpacity disabled={!edit} onPress={ () => this.changeValue(item, this.state.days)}
                                         style={{
                                                 borderWidth:1,
                                                 borderColor: GRAY_DARK,
@@ -258,47 +375,151 @@ export default class SceneScreen extends Component{
                         
                         <View style={{width: '100%' }}>
                             <View style={{marginLeft: 20, marginTop: 20, marginRight: 20, width: '100%', height: 30}}>
-                                <TouchableOpacity style={{ marginLeft: 20, height: '100%', width: 200}} onPress={this._showDateTimePickerS}>
-                                    <Text style={{color: 'white', fontSize: 16,}}>Hora inicio:   {timeStart}  hs</Text>
+                                <TouchableOpacity disabled={!edit} style={{ marginLeft: 20, height: '100%', width: 200}} onPress={this._showDateTimePicker}>
+                                    <Text style={{color: 'white', fontSize: 16,}}>Hora inicio:   {time}  hs</Text>
                                 </TouchableOpacity>
                             </View>
                             
                             <DateTimePicker
                                 mode = 'time'
-                                isVisible={this.state.isDateTimePickerVisibleS}
-                                onConfirm={this._handleDatePickedS}
-                                onCancel={this._hideDateTimePickerS}/>
+                                isVisible={this.state.isDateTimePickerVisible}
+                                onConfirm={this._handleDatePicked}
+                                onCancel={this._hideDateTimePicker}/>
                         </View>
-                        {/*<View style={{ flexDirection: 'row', justifyContent: 'center', height: 40, marginRight: 20 }}>
-                            <View style={{flex:4}}>
-                                <Text style={styles.whiteText}>{this.state.endTimeConditionText}</Text>
-                            </View>
-                            <View style={{flex:1}}>
-                            <Switch
-                                value={this.state.timeCondition}
-                                onTintColor='cyan'
-                                tintColor='rgb(204, 204, 204)'
-                                onValueChange={(timeCondition) => this.setState({timeCondition: timeCondition})}
-                            />                       
-                            </View>
-                        </View>
-                        <View style={{width: '100%' }}>
-                            <View style={{marginLeft: 20, marginTop: 20, marginRight: 20, width: '100%', height: 30}}>
-                                <TouchableOpacity style={{ marginLeft: 20, height: '100%', width: 200}} onPress={this._showDateTimePickerE}>
-                                    <Text style={{color: 'white', fontSize: 16,}}>Hora fin:   {timeEnd}  hs</Text>
-                                </TouchableOpacity>
-                            </View>
-                            
-                            <DateTimePicker
-                                mode = 'time'
-                                isVisible={this.state.isDateTimePickerVisibleE}
-                                onConfirm={this._handleDatePickedE}
-                                onCancel={this._hideDateTimePickerE}/>
-                        </View>*/}
+                        
                     </View>
                     }
 
-                    {/*<View style={{ flexDirection: 'row', justifyContent: 'center', height: 40, marginRight: 20 }}>
+                    <View style={{ marginTop: 10, marginBottom: 20 }}>
+                        <View style={{flexDirection: 'row'}}>
+                            <View style={{ flex: 4 }}>
+                                <Text style={styles.whiteText}>Acciones: </Text>
+                            </View>
+                            <View style={{ flex: 1, alignItems: 'center' }}>
+                                <TouchableOpacity disabled={!edit} onPress={() => this.props.navigation.push('action', {action: null, save: this.createAction})}>
+                                    <Icon name='add' color='white' size={30}/>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        <View style={{flexDirection: 'column', marginHorizontal: 20 }}>
+                            <TableHeader/>
+                            { this.state.actions.map(item => 
+                                <Action key={item.id} edit={edit} press={this.goToEditAction} action={item} />
+                            )}
+                            { this.state.actions.length == 0 &&
+                                <View style={{ backgroundColor: 'white', height: 60, paddingVertical:10, alignItems:'center', justifyContent: 'center' }}>
+                                    <Text style={{color: 'rgb(80,80,80)', fontSize: 15}}>No hay acciones</Text>
+                                    <Text style={{color: 'rgb(80,80,80)', fontSize: 14}}>Para agregar presione el botón + </Text>
+                                </View>
+                            }
+
+                            
+                        </View>
+                    </View>
+                    
+                </View>
+                { submittable && edit && (
+                    <TouchableHighlight onPress={() => this.handleSubmit()} underlayColor='transparent'>
+                        <View style={styles.buttonContainerSave}>
+                            <Text style={styles.textSubmitLogin}>Guardar</Text>
+                        </View>
+                    </TouchableHighlight>
+                )} 
+                 
+                </ScrollView>
+                { !edit &&
+                        <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.setState({edit: true})} 
+                        renderIcon={() => <Icon name='edit' size={25} color='white'/>}/>
+                    }
+            </FontLoader>
+        );
+    }
+}
+
+class TableHeader extends Component {
+    render(){
+        return(
+        <View style={{ marginTop: 20, paddingVertical: 20, flexDirection: 'row', backgroundColor: 'rgb(204, 204, 204)'}}>
+            <View key={1} style={{flex: 3}}><Text style={{marginLeft: 10, fontSize: 16, color: 'rgb(80, 80, 80)'}}>Artefacto</Text></View>
+            <View key={2} style={{flex: 3}}><Text style={{marginLeft: 10, fontSize: 16, color: 'rgb(80, 80, 80)'}}>Variable</Text></View>
+            <View key={3} style={{flex: 2}}><Text style={{marginLeft: 10, fontSize: 16, color: 'rgb(80, 80, 80)'}}>Valor</Text></View>
+        </View>
+        );
+    }
+}
+
+class Action extends Component{
+    constructor(props){
+        super(props);
+
+        this.state = {
+            zone: '',
+            artifact: '',
+            variable: '',
+            type: '',
+            refresh: false,
+            edit: true,
+        }
+
+    }
+
+    componentWillReceiveProps(props) {
+        const { action, edit } = this.props;
+        if (edit != props.edit || props.action.zoneId !== action.zoneId || props.action.artifacId !== action.artifactId
+            || props.action.variableId !== action.variableId || props.action.value !== action.value) {
+               this.state.zone = Communication.getInstance().getZone(props.action.zoneId).name;
+                this.state.artifact = Communication.getInstance().getArtifact(props.action.artifactId).name;
+                if(props.action.variableId > 0){
+                    variable = Communication.getInstance().getVariable(props.action.variableId);
+                    this.state.variable = variable.name;
+                    this.state.type = variable.type;
+                }
+                else {
+                    this.state.variable = "Prendido";
+                    this.state.type = '';
+                }
+            this.setState({refresh: true});
+        }
+    }
+
+    updateData(){
+        this.state.zone = Communication.getInstance().getZone(this.props.action.zoneId).name;
+        this.state.artifact = Communication.getInstance().getArtifact(this.props.action.artifactId).name;
+        if(this.props.action.variableId > 0){
+            variable = Communication.getInstance().getVariable(this.props.action.variableId);
+            this.state.variable = variable.name;
+            this.state.type = variable.type;
+        }
+        else {
+            this.state.variable = "Prendido";
+            this.state.type = '';
+        }
+    }
+
+    componentWillMount(){
+        this.state.edit = this.props.edit;
+        this.updateData();
+    }
+
+    render(){
+        value = this.props.action.value;
+        return(
+            <TouchableOpacity disabled={!this.state.edit} onPress={() => this.props.press(this.props.action)} >
+                <View style={{ flexDirection: 'row', backgroundColor: 'white', height: 40, paddingVertical:10, justifyContent: 'center' }}>
+                    <View key={1} style={{flex:3}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{this.state.artifact} ({this.state.zone})</Text></View>
+                    <View key={2} style={{flex:3}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{this.state.variable}</Text></View>
+                    <View key={3} style={{flex:2}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{getValueLabel(value, this.props.action.variableId, this.state.type)}</Text></View>
+                </View>
+            </TouchableOpacity>
+        );
+    }
+}
+
+
+/*
+
+    para agregar condicion de valor.. :
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', height: 40, marginRight: 20 }}>
                         <View style={{flex:4}}>
                             <Text style={styles.whiteText}>{this.state.valueConditionText}</Text>
                         </View>
@@ -321,25 +542,4 @@ export default class SceneScreen extends Component{
                              si tiene variables: Prendido + variables segun type de variable.. -->
                         
                     </View>
-                */}
-                    
-                </View>
-                { submittable && (
-                    <TouchableHighlight onPress={this.handleSubmit} underlayColor='transparent'>
-                        <View style={styles.buttonContainerSave}>
-                            <Text style={styles.textSubmitLogin}>Guardar</Text>
-                        </View>
-                    </TouchableHighlight>
-                )} 
-                
-                    <TouchableHighlight onPress={() => this.navigation.goBack()} underlayColor='transparent'>
-                        <View style={styles.buttonContainerCancel}>
-                            <Text style={styles.textSubmitLogin}>Cancelar</Text>
-                        </View>
-                    </TouchableHighlight>
-                 
-            </ScrollView>
-        );
-    }
-}
-
+                */
