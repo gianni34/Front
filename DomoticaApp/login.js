@@ -22,14 +22,24 @@ export default class LogIn extends Component {
             message: 'No hemos encontrado esa combinación de usuario y contraseña. Si no recuerda su contraseña ingrese a Olvidé mi contraseña.',
         }
         
-        
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleSubmit() {
-        okay = Communication.getInstance().authenticate(this.state.user, this.state.password);
-        if (!okay) {
-            this.setState({ errorMessage: true })
+    setStateAsync(state) {
+      return new Promise((resolve) => {
+        this.setState(state, resolve)
+      });
+    }
+
+    async handleSubmit() {
+        response = await Communication.getInstance().authenticate(this.state.user, this.state.password);
+        if (response.result) {
+          try {
+            await AsyncStorage.clear();
+            var userToken = response.data + '&' + this.state.user + '&' +  this.state.password;
+            var encrypted = Encryption.encrypt(userToken);
+            await AsyncStorage.setItem('userToken', encrypted.toString());
+            Communication.getInstance().setId(response.data);
             this.props.navigation.navigate(response.isAdmin ? 'AppAdmin': 'AppUser');
           } catch (e) {
             Alert.alert('Error', 'Oops! Something happened. Please try again '+ e);

@@ -1,5 +1,6 @@
 import { createStackNavigator } from 'react-navigation';
 import DrawerStackAdmin from './drawerStackAdmin';
+import DrawerStackUser from './drawerStackUser';
 import UserScreen from './userScreen';
 import SceneScreen from './sceneScreen';
 import LogIn from './login';
