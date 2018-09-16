@@ -32,10 +32,10 @@ class MoreMenu extends Component {
                 </MenuTrigger>
                 <MenuOptions style={{ backgroundColor:'rgb(204, 204, 204)'}}>
                     <MenuOption value={1} style={{height: 40, justifyContent: 'center'}} onSelect={() => this.props.navigation.navigate('newUser', { userId: this.props.id, refresh: this.props.refresh })}>
-                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Editar</Text>
+                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 14, fontWeight: 'bold' }}>  Editar</Text>
                     </MenuOption>
                     <MenuOption value={2} style={{height: 40, justifyContent: 'center'}} onSelect={() => Alert.alert('¿Desea eliminar el usuario?', { cancelable: false })}>
-                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Eliminar</Text>
+                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 14, fontWeight: 'bold' }}>  Eliminar</Text>
                     </MenuOption>
                 </MenuOptions>
             </Menu>
@@ -96,25 +96,40 @@ export default class Users extends Component {
         }
     }
 
-    deleteUser(id){
-        Communication.getInstance().deleteUser(id);
-        this.setState({refresh: true});
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+          this.setState(state, resolve)
+        });
     }
 
-    refreshScreen(){
-        this.setState({refresh: true});
+    async deleteUser(id){
+        await Communication.getInstance().deleteUser(id);
+        this.refreshScreen();
+    }
+
+    async refreshScreen(){
+        users = await Communication.getInstance().getUsers()
+        await this.setStateAsync({users: users});
+    }
+
+    
+    async componentDidMount() {
+        //StatusBar.setNetworkActivityIndicatorVisible(true);
+        const users = await Communication.getInstance().getUsers();
+        await this.setStateAsync({users: users});
+        //StatusBar.setNetworkActivityIndicatorVisible(false);
     }
 
     render(){
-        this.state.users = Communication.getInstance().getUsers();
         return(
             <MenuProvider backHandler={this.customBackHandler}>
                 <FontLoader>
                 <ScrollView style={{flex: 1, backgroundColor: 'rgb(204, 204, 204)', paddingTop:10 }}>
-                {this.state.users.map(item =>
+                { this.state.users.map(item =>
+                        item.id != Communication.getInstance()._userID && 
                         <View style={{ height:70, marginTop:10, marginHorizontal:10 }} key={item.id}>
                             <Block name={item.name} key={item.id} id={item.id} navigation={this.props.navigation} handler={this.deleteUser} refresh={this.refreshScreen}/>
-                        </View>)}
+                        </View>) }
                 <View style={{height:100, width:'100%'}}/>
                 </ScrollView>
                 </FontLoader>

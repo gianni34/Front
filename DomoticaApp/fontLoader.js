@@ -1,7 +1,19 @@
 import React from 'react';
 import { AppLoading, Font } from 'expo';
 
-import FontAwesome 
+/*import FontAwesome 
+  from './node_modules/react-native-vector-icons/Fonts/FontAwesome.ttf';
+import MaterialIcons  
+  from './node_modules/react-native-vector-icons/Fonts/MaterialIcons.ttf';
+import Entypo 
+  from './node_modules/react-native-vector-icons/Fonts/Entypo.ttf';
+import MaterialCommunityIcons  
+  from './node_modules/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf';
+import Ionicons 
+  from './node_modules/react-native-vector-icons/Fonts/Ionicons.ttf';
+*/
+
+  import FontAwesome 
   from './node_modules/@expo/vector-icons/fonts/FontAwesome.ttf';
 import MaterialIcons  
   from './node_modules/@expo/vector-icons/fonts/MaterialIcons.ttf';
@@ -11,7 +23,7 @@ import MaterialCommunityIcons
   from './node_modules/@expo/vector-icons/fonts/MaterialCommunityIcons.ttf';
 import Ionicons 
   from './node_modules/@expo/vector-icons/fonts/Ionicons.ttf';
-class FontLoader extends React.Component {
+    class FontLoader extends React.Component {
   state = {
     fontLoaded: false
   };

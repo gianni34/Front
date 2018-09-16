@@ -1,5 +1,5 @@
 keystore(
-    name = "debug",
+    name = "futura",
     properties = "debug.keystore.properties",
     store = "debug.keystore",
     visibility = [

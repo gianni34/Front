@@ -17,8 +17,6 @@ export default class Communication {
         this.scenes = [
         { id: 1, name: 'A trabajar', description: 'Se apaga el aire acondicionado a las 8:30 am de L. a V.', actions: [{id: 1, zoneId: 1, artifactId:3, variableId: 0, value: 0}], onDemand: true, timeCondition: true, days: [0,1,2,3,4], time: '16:00',  },
         ];
-
-
         
         this.artifacts = [{id: 1, name: 'Luz entrada', zoneId: 1,  on:true, type: 'lightSwitch'}, 
         {id: 2, name: 'Luz sillón', zoneId: 1, on:true, type: 'lightDimmer'}, 
@@ -47,9 +45,9 @@ export default class Communication {
 
     static myInstance = null;
 
-    _userID = "";
-    _url = 'http://192.168.1.51:8000/';
-    _IP = "";
+    _userID = 0;
+    _url = 'http://192.168.1.5:8000/';
+    _IP = "192.168.1.5";
     _role = "";
     
 
@@ -61,208 +59,275 @@ export default class Communication {
         return Communication.myInstance;
     }
 
+    setId(id){
+        this._userID = id;
+    }
+
+    setIP(ip){
+        this._IP = ip;
+        this._url = 'http://' + ip + ':8000/';
+    }
+
+    getIP(ip){
+        return this._IP;
+    }
+
    /* _getUserId(){
         const idToken = AsyncStorage.getItem('idToken');
         return idToken ? parseInt(idToken,10): 0
     };*/
 
-    authenticate(user, password){
-        result = this.users.filter(function(obj){
-            return obj.name == user && obj.password == password;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name};
-        });
-        if (result.length == 1){
-            console.log(" authenticate con id "+result[0].id );
-            return true;
-            //return {ok:true, id: result[0].id};
-        } else {
-            return false;
-        }
-        //return {ok: false, id: 0};
-    }
-
-    isAdmin(){
-        id = this._getUserId();
-        if (id > 0){
-            console.log(" request isAdmin con id: "+id);
-            result = this.users.filter(function(obj){
-                return obj.id == id;
-            }).map(function({id, name, password, isAdmin, question, answer}){
-                return {id, isAdmin};
+    async authenticate(user, password){
+        url = this._url + 'login';
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user: user,
+                    password: password,
+                })
             });
-            if(result.length == 1){
-                return result[0].isAdmin;
-            }
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            return { result: false, message: 'Se produjo un error, reintente por favor.'};
         }
-        return false;
+
     }
 
-    getSecretQuestion(user){
-        result = this.users.filter(function(obj){
-            return obj.name == user ;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, question};
-        });
-        if(result.length == 1){
-            return result[0].question;
+    async isAdmin(){
+        if(this._userID == 0)
+            return { result: false, message: 'Se produjo un error, reintente por favor.'};
+        url = this._url + 'users/' + this._userID + '/';
+        try {
+            let response = await fetch(url);
+            let user = await response.json();
+            message = user.isAdmin ? 'Correcto' : 'No tiene permiso de administrador';
+            return { result: user.isAdmin, message: message };
+        } catch (error) {
+            return { result: false, message: 'Se produjo un error, reintente por favor.'};
         }
-        return '';
     }
 
-    validateSecretAnswer(user, answer){
-        result = this.users.filter(function(obj){
-            return obj.name == user && obj.answer == answer;
-        }).map(function({name, id, password, isAdmin, question, answer}){
-            return {id, name, answer};
-        });
-        console.log(result);
-        if (result.length == 1){
-            console.log("ok");
-            return true;
+    async getSecretQuestion(user){
+        url = this._url + 'userQuestion';
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user: user,
+                })
+            });
+            let responseJson = await response.json();
+            return responseJson
+        } catch (error) {
+            return { result: false, message: 'Se produjo un error, reintente por favor.'};
         }
-        console.log("error");
-        return false;
     }
 
-    getZones(){
-        /*url = this._url + 'zones/';
-        zones = [];
-        fetch(url)
-        .then(results => results.json())
-        .then((json) => (zones = json.zones))
-        .catch((error) => {
+    async validateSecretAnswer(user, answer){
+        url = this._url + 'checkAnswer';
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user: user,
+                    answer: answer
+                })
+            });
+            let responseJson = await response.json();
+            return responseJson
+        } catch (error) {
+            return { result: false, message: 'Se produjo un error, reintente por favor.'};
+        }
+    }
+
+    async getZones(){
+        url = this._url + 'zones/';
+        try {
+            let response = await fetch(url);
+            let responseJson = await response.json();
+            zones = responseJson.results
+            console.log(zones);
+            return zones;
+        } catch (error) {
             console.error(error);
-        });*/
-        return this.zones;
+            return [];
+        }
     }
 
-    getZone(id){
-        zones = this.zones.filter(function(obj){
-            return obj.id == id;
-        }).map(function({name, id, type}){
-            return {name, id, type};
-        });
-        if(zones.lenght == 0)
+    async getZone(id){
+        url = this._url + 'zones/' + id + "/";
+        try {
+            let response = await fetch(url);
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            console.error(error);
             return null;
-        return zones[0];
+        }
     }
 
-    getScenes(){
-       /* url = this._url + 'scenes/';
+    async getScenes(onDemand = true, timeCondition = true){
+        url = this._url + 'scenes/';
         scenes = [];
-        fetch(url)
-        .then(results => results.json())
-        .then((json) => (scenes = json.scenes))
-        .catch((error) => {
+        try {
+            let response = await fetch(url);
+            let responseJson = await response.json();
+            return responseJson.results;
+        } catch (error) {
             console.error(error);
-        });*/
-        return this.scenes;
+            return scenes;
+        }
     }
 
-    getUsers(id){
-        return this.users.filter(function(obj){
-            return obj.id != id;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, isAdmin};
-        });
-        /*url = this._url + 'users/';
-        users = [];
-        fetch(url)
-        .then(results => results.json())
-        .then((json) => (users = json.users))
-        .catch((error) => {
+    async getUsers(){
+        url = this._url + 'users/';
+        try {
+            let response = await fetch(url);
+            let responseJson = await response.json();
+            users = responseJson.results
+            console.log("userID: " + this._userID);
+            result = users.map(function(obj){
+                return {id: obj.id, name: obj.name};
+            });            
+            return result;
+        } catch (error) {
             console.error(error);
-        });*/
-    }
-
-    getUser(id){
-        result =this.users.filter(function(obj){
-            return obj.id == id;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, password, isAdmin};
-        });
-        return result[0];
-    }
-
-    createUser(name, password, isAdmin){
-        users = this.users.filter(function(obj){
-            return obj.name == name;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, password, isAdmin};
-        });
-        if(users.length > 0){
-            console.log(" nombre de usuario ya existe ");
-            return {error: true, message: 'El nombre de usuario ya existe.'};
+            return [];
         }
-        id = 1;
-        if (this.users.length > 0)
-            id = this.users[this.users.length - 1].id + 1;
-        user = {id: id, name: name, password: password, isAdmin: isAdmin, question: '¿Respuesta? resp', answer: 'resp' };
-        this.users.push(user);
-        console.log(" usuario creado ");
-        console.log(this.users);
-        return {error: false, message: ''};
     }
 
-    updateUser(idU, nameU, passwordU, isAdminU){
-        search = this.users.filter(function(obj){
-            return obj.name == nameU && obj.id != idU;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, password, isAdmin};
-        });
-        console.log(search);
-        if(search.length > 0){
-            return {error: true, message: "El usuario ya existe."};
+    async getUser(id){
+        url = this._url + 'users/' + id + '/';
+        user = null;
+        try {
+            let response = await fetch(url);
+            let user = await response.json();
+            return {id: user.id, name: user.name, password: user.password, isAdmin: user.isAdmin}
+        } catch (error) {
+            console.error(error);
+            return null;
         }
-        user = this.users.filter(function(obj){
-            return obj.id == idU;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, password, isAdmin};
-        });
-        if (user.length == 0){
-            console.log("no se encontro.. "+ idU + 'id');
-            return {error: true, message: "No se encontró el usuario, por favor intente nuevamente."};
-        } else {
-            this.users = this.users.map(item => {
-                if(item.id === idU){
-                  return { id: idU, name: nameU, password: passwordU, isAdmin: isAdminU, question: item.question, answer: item.answer  }
-                }
-                return item
+    }
+
+    async createUser(name, password, isAdmin){
+        url = this._url + 'createUser';
+        try {
+            user = { name: name, password: password, isAdmin: isAdmin };
+            let response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user: user,
+                    admin: this._userID 
+                })
             });
-            return {error: false, message: ''};
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            console.error(error);
+            return { result: false, message: 'Se produjo un error, reintente por favor.' };
         }
     }
 
-    deleteUser(id){
-        this.users = this.users.filter(function(obj){
-            return obj.id != id;
-        }).map(function({id, name, password, isAdmin, question, answer}){
-            return {id, name, isAdmin};
-        });
-        console.log("--------------- usuario eliminado -------------------");
+    async updateUser(id, name, password, isAdmin){
+        url = this._url + 'users/' + id + '/';
+        user = {id: id, name: name, password: password, isAdmin: isAdmin};
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "id": id,
+                    "name": name,
+                    "old_password": '',
+                    "password": password,
+                    "old_password": "",
+                    "isAdmin": isAdmin,
+                    "user": this._userID
+                }),
+            });
+            let responseJson = await response.json();
+            if(response.ok) {
+                console.log("------------------------ updated ------------------------")
+                return { result: true, message: "Se actualizó correctamente." };
+            }
+            if(response.status >= 500){
+                return { result: false, message: "Se produjo un error, intente nuevamente." }; //throw new Error('Network response was not ok.');
+            } else {
+                return responseJson;
+            }
+        } catch (error) {
+            return { result: false, message: "Hubo un error, intente nuevamente." };
+        }
     }
 
-    getScene(id){
-        /*url = this._url + 'scene/' + id + '/';
-        scenes = [];
-        fetch(url)
-        .then(results => results.json())
-        .then((json) => (scenes = json.scenes))
-        .catch((error) => {
+    // falta probarlo desde aca
+    async deleteUser(id){
+        url = this._url + 'deleteUser';
+        let response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "user": this._userID,
+                "id": id
+            }),
+        });
+        let responseJson = await response.json();
+        if(response.result) {
+            return { result: true, message: "Se actualizó correctamente." };
+        }
+    }
+
+    async getScene(id){
+
+        url = this._url + 'scenes/' + id + '/';
+        scenes = null;
+        try {
+            let response = await fetch(url);
+            let scene = await response.json();
+            return scene;
+        } catch (error) {
             console.error(error);
-        });*/
-        return this.scenes.filter(function(obj){
-            return obj.id == id;
-        })[0];
+            return null;
+        }
     }
 
-    getArtifacts(zoneId){
-        return this.artifacts.filter(function(obj){
-            return obj.zoneId == zoneId;
-        }).map(function({id, name, zoneId, on, type}){
-            return {id, name, zoneId, on, type};
-        });
+    async getArtifacts(zoneId){
+        url = this._url + 'zones/' + zoneId + '/artifact_list/';
+        artifacts = [];
+        try {
+            let response = await fetch(url);
+            let responseJson = await response.json();
+            artifacts = responseJson
+            console.log(artifacts);
+            return artifacts;
+        } catch (error) {
+            console.error(error);
+            return { result: false, message: 'Se produjo un error, intente nuevamente.' };
+        }
     }
 
     getArtifact(id){
@@ -274,7 +339,7 @@ export default class Communication {
         return result[0];
     }
     
-    getVariables(artifactId){
+    /*getVariables(artifactId){
         console.log("getVariables: " + artifactId);
         return this.variables.filter(function(obj){
             return obj.artifactId == artifactId;
@@ -282,7 +347,7 @@ export default class Communication {
             return {id, name, artifactId, value, type, min, max, minIcon, maxIcon};
         })
 
-    }
+    }*/
 
     getVariable(id){
         result = this.variables.filter(function(obj){
@@ -293,7 +358,60 @@ export default class Communication {
         return result[0];
     }
 
-    saveScene(scene){
+    async saveScene(scene){
+        if(scene.id){
+            url = this._url + 'scenes/'+scene.id+'/';
+            try {
+                let response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "id": scene.id,
+                        "name": scene.name,
+                        "description": scene.description,
+                        "on_demand": scene.onDemand,
+                        "time_condition": scene.timeCondition,
+                        "time": scene.time,
+                        "days": scene.days,
+                        "actions": scene.actions
+                    })
+                });
+                let responseJson = await response.json();
+                return responseJson;
+            } catch (error) {
+                console.error(error);
+                return { result: false, message: 'Se produjo un error, reintente por favor.' };
+            }
+        }else{
+            url = this._url + 'scenes/';
+            try {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "name": scene.name,
+                        "description": scene.description,
+                        "on_demand": scene.onDemand,
+                        "time_condition": scene.timeCondition,
+                        "time": scene.time,
+                        "days": scene.days,
+                        "actions": scene.actions
+                    })
+                });
+                let responseJson = await response.json();
+                return responseJson;
+            } catch (error) {
+                console.error(error);
+                return { result: false, message: 'Se produjo un error, reintente por favor.' };
+            }
+        }
+/*
         scenes = this.scenes.filter(function(obj){
             return obj.name == scene.name && obj.id != scene.id;
         }).map(function({id, name}){
@@ -313,7 +431,7 @@ export default class Communication {
                 return item
             });
         }
-        return { result: true, message: '' };
+        return { result: true, message: '' };*/
     }
 
     deleteScene(id){
@@ -322,15 +440,15 @@ export default class Communication {
         });
     }
 
-    getRanges(id){
+    /*getRanges(id){
         return this.var_ranges.filter(function(obj){
             return obj.variableId == id;
         }).map(function({id, name, variableId, type}){
             return {id, name, variableId, type};
         });
-    }
+    }*/
     
-    
+    /*
     setValue(id, value){
         console.log("llego.. ")
         this.variables[id-1].value = value;
@@ -350,11 +468,72 @@ export default class Communication {
                 return true;
             }
         }
-        return false;*/
+        return false;
+}*/
+
+    async executeScene(id){
+        url = this._url + 'executeScene';
+        try{
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "scene": id
+                }),
+            });
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            console.error(error);
+            return { result: false, message: 'Se produjo un error, intente nuevamente.' };
+        }
     }
 
-    turnOnOff(id, on){
-        this.artifacts[id-1].on = on;
-        console.log("prendido " + this.artifacts[id-1].on);
+    async turnOnOff(id, on){
+        url = this._url + 'changePower';
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "artifact": id,
+                    "power": on
+                }),
+            });
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            console.error(error); 
+            return { result: false, message: 'Se produjo un error, intente nuevamente.' };
+        }
+    }
+    
+    
+    async changeVariable(id, value){
+        url = this._url + 'changeVariable';
+        try {
+            let response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "variable": id,
+                    "value": value
+                }),
+            });
+            let responseJson = await response.json();
+            return responseJson;
+        } catch (error) {
+            console.error(error);
+            return { result: false, message: 'Se produjo un error, intente nuevamente.' };
+        }
     }
 };

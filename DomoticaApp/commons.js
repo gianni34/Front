@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
-import { Text, View, Image } from 'react-native';
+import { Text, View, Image, Dimensions } from 'react-native';
 
 
 export function LogoLogin(){
     return (
       <View style={{flex: 1, backgroundColor: 'transparent'}} >
         <View style={styles.logo}>
-          <Image source={require('./domotica.png')} style={{flex: 1}} resizeMode="contain"/>
+          <Image source={require('./images/futura.png')} style={{flex: 1}} resizeMode="contain"/>
         </View>
       </View>
     );

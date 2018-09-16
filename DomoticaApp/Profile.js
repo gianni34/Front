@@ -267,7 +267,7 @@ const stylesP = StyleSheet.create({
       flex:1, 
       paddingLeft: 20, 
       color: 'rgb(252, 249, 249)',
-      fontSize: 17,
+      fontSize: 15,
       fontFamily: 'sans-serif',
     },
   
@@ -275,7 +275,7 @@ const stylesP = StyleSheet.create({
       color: 'rgb(179, 176, 176)',
       backgroundColor: 'transparent',
       borderColor: 'transparent',
-      fontSize: 16,
+      fontSize: 14,
     },
   
     buttonSubmitProfile: {
@@ -284,7 +284,7 @@ const stylesP = StyleSheet.create({
       borderColor: 'white',
       borderRadius: 5,
       alignItems: 'center',
-      fontSize: 16,
+      fontSize: 14,
     },
 
     errorContainer: {
@@ -306,7 +306,7 @@ const stylesP = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
         backgroundColor: 'transparent',
-        fontSize: 16,
+        fontSize: 15,
       },
     
       buttonContainer: {

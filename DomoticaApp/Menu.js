@@ -29,7 +29,7 @@ export class UserMoreMenu extends Component {
                 </MenuTrigger>
                 <MenuOptions style={{ backgroundColor:'rgb(204, 204, 204)'}}>
                     <MenuOption value={1} style={{height: 40, justifyContent: 'center'}} onSelect={() => this.props.navigation.navigate('newUser')}>
-                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Editar</Text>
+                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 14, fontWeight: 'bold' }}>  Editar</Text>
                     </MenuOption>
                     <MenuOption value={2} style={{height: 40, justifyContent: 'center'}} onSelect={() => Alert.alert('¿Desea eliminar el usuario?',
                                                                                                                         'Confirme',
@@ -38,7 +38,7 @@ export class UserMoreMenu extends Component {
                                                                                                                             {text: 'Aceptar', onPress: () => Communication.getInstance().deleteUser(this.props.id)},
                                                                                                                         ],
                                                                                                                         { cancelable: false })}>
-                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 16, fontWeight: 'bold' }}>  Eliminar</Text>
+                        <Text style={{color:'rgb(127, 127, 127)', fontSize: 14, fontWeight: 'bold' }}>  Eliminar</Text>
                     </MenuOption>
                 </MenuOptions>
             </Menu>

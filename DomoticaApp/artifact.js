@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { Text, View, Image, Alert, TouchableHighlight, ScrollView, Switch, TextInput } from 'react-native';
 import { Icon } from 'react-native-elements';
 
-
 import styles from './styles';
 import Communication from './communication';
 import Variables from './variables';
@@ -15,6 +14,8 @@ export default class Artifact extends Component {
             artifact: null,
             variables:[],
             on: false,
+            errorMessage: false, 
+            message: '',
         }
 
         this.refresh = this.refresh.bind(this);
@@ -26,17 +27,27 @@ export default class Artifact extends Component {
         this.props.handler();
     }
 
-    changeValue(value){
-        this.state.on = value;
-        Communication.getInstance().turnOnOff(this.props.id, value);
+    async changeValue(value){
+        this.setState({on: value});
+        console.log("id del artefacto a prender/apagar: "+this.props.object.id +" - ");
+        result = await Communication.getInstance().turnOnOff(this.props.object.id, value);
+        if(!result.result){
+            Alert.alert("Error", result.message);
+            this.setStateAsync({on: !value, errorMessage: true, message: result.message});
+        }
         this.props.handler();
     }
-
+    
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+          this.setState(state, resolve)
+        });
+    }
 
     componentWillMount(){
-        this.state.artifact = Communication.getInstance().getArtifact(this.props.id)
+        this.state.artifact = this.props.object;
         this.state.on = this.state.artifact.on;
-        this.state.variables = Communication.getInstance().getVariables(this.props.id);
+        this.state.variables = this.props.object.variables;
     }
 
     render(){
@@ -57,7 +68,7 @@ export default class Artifact extends Component {
             <View style={{ borderBottomLeftRadius: 10,
                 borderBottomRightRadius: 10, backgroundColor: 'rgb(66, 66, 66)', padding: 10}}>
                 {this.state.variables.map(item =>
-                    <Variables handler={this.refresh} id={item.id} key={item.id}/>
+                    <Variables handler={this.refresh} object={item} key={item.id}/>
                 )}
             </View>
             }

@@ -28,14 +28,14 @@ function capitalizeText(text){
     return text.slice(0,1).toUpperCase() + text.slice(1, text.length).toLowerCase();
 }
 
-function getValueLabel(value, variableId, type=""){
-    if (variableId == 0){
+function getValueLabel(value, variable, type=""){
+    if (variable == 0){
         return value==0?'Apagado':'Prendido';
     }
     else if (type == 'iconButtons' || type == 'labelButtons'){
-        ranges = Communication.getInstance().getRanges(variableId);
+        ranges = variable.ranges; //.getRanges(variableId);
         res = ranges.filter(function(obj){
-            return obj.id == value;
+            return obj.value == value;
         })[0];
         value = capitalizeText(res.name);
     }
@@ -74,6 +74,7 @@ export default class SceneScreen extends Component{
             isDateTimePickerVisible: false,
             time : getParsedTime(new Date()),
             edit: true,
+            play: false,
         }
 
         this.changeValue = this.changeValue.bind(this);
@@ -90,7 +91,7 @@ export default class SceneScreen extends Component{
         title: 'Escena',
         headerRight:
         <View>
-        { navigation.getParam('id', 0) != 0 && 
+        { navigation.getParam('id', 0) != 0 && !navigation.getParam('play', false) &&
         <TouchableOpacity style={{marginRight: 20}} onPress={() => {Alert.alert('¿Desea eliminar la escena?',
             'Confirme',
             [
@@ -103,18 +104,23 @@ export default class SceneScreen extends Component{
         </View>
     });
 
-    componentWillMount(){
+    async componentWillMount(){
         this.state.id = this.props.navigation.getParam('id', 0);
+        this.state.play = this.props.navigation.getParam('play', false);
         if (this.state.id > 0){
-            scene = Communication.getInstance().getScene(this.state.id);
+            scene = await Communication.getInstance().getScene(this.state.id);
             this.state.name = scene.name;
             this.state.description = scene.description;
             this.state.onDemand = scene.onDemand;
             this.state.timeCondition = scene.timeCondition;
             this.state.time = scene.time;
             this.state.actions = scene.actions;
+            console.log("----------------------------------------------------------------------------------------------");
+            console.log(scene.actions);
+            console.log("----------------------------------------------------------------------------------------------");
+            days = scene.days.split(',')
             this.state.days = this.state.days.map(item => { 
-                if (scene.days.filter(function(obj){ return obj == item.id; }).length > 0){ 
+                if (days.filter(function(obj){ return obj == item.id; }).length > 0){ 
                     return { id: item.id, letter: item.letter, pressed: true, iconColor: 'white', textColor: GRAY_DARK };
                 } else { 
                     return item 
@@ -123,6 +129,7 @@ export default class SceneScreen extends Component{
             this.state.edit = this.props.navigation.getParam('edit', false);
         }
         this.props.navigation.setParams({ id: this.state.id, handleDelete: this.delete });    
+
     }
 
     changeValue(x, days){
@@ -150,7 +157,6 @@ export default class SceneScreen extends Component{
     
     _handleDatePicked = (date) => {
         time = getParsedTime(date);
-        console.log('A date has been picked: ', time);
         this.setState({time: time});
         this._hideDateTimePicker();
     };
@@ -179,6 +185,8 @@ export default class SceneScreen extends Component{
     }
 
     createAction(action){
+        console.log(action);
+        console.log('---------------------------------------')
         try {
             id = 1;
             if (this.state.actions.length > 0)
@@ -222,15 +230,17 @@ export default class SceneScreen extends Component{
         }
     }
 
-    handleSubmit(){
+    async handleSubmit(){
         days = this.state.days.filter(function(obj){
             return obj.pressed
         }).map(item => {
             return item.id
         });
-        console.log("days -- "+days)
-        scene = { id: this.state.id, name: this.state.name, description: this.state.description, actions: this.state.actions, onDemand: this.state.onDemand, timeCondition: this.state.timeCondition, days: days, time: this.state.time };
-        response = Communication.getInstance().saveScene(scene);
+        var dayString;
+        for(d in days)
+            dayString += dayString.length==0?d:','+d;
+        scene = { id: this.state.id, name: this.state.name, description: this.state.description, actions: this.state.actions, onDemand: this.state.onDemand, timeCondition: this.state.timeCondition, days: dayString, time: this.state.time };
+        response = await Communication.getInstance().saveScene(scene);
         if (response.result) {
             this.props.navigation.goBack();
         } else {
@@ -247,7 +257,7 @@ export default class SceneScreen extends Component{
         timeAux = this.state.time;
         time = timeAux;
         this.state.submittable = this._validateData();
-        const { edit, onDemand, onDemandText, submittable, valueCondition, valueConditionText, timeCondition, timeConditionText } = this.state;
+        const { edit, onDemand, onDemandText, play, submittable, valueCondition, valueConditionText, timeCondition, timeConditionText } = this.state;
         errorMessage = this.state.errorMessage;
         console.log(this.state.actions);
         return(
@@ -418,16 +428,23 @@ export default class SceneScreen extends Component{
                     </View>
                     
                 </View>
-                { submittable && edit && (
+                { submittable && edit && !play && (
                     <TouchableHighlight onPress={() => this.handleSubmit()} underlayColor='transparent'>
                         <View style={styles.buttonContainerSave}>
                             <Text style={styles.textSubmitLogin}>Guardar</Text>
                         </View>
                     </TouchableHighlight>
                 )} 
+                 { play && (
+                    <TouchableHighlight onPress={() => this.props.navigation.goBack()} underlayColor='transparent'>
+                        <View style={styles.buttonContainerSave}>
+                            <Text style={styles.textSubmitLogin}>Ejecutar</Text>
+                        </View>
+                    </TouchableHighlight>
+                )} 
                  
                 </ScrollView>
-                { !edit &&
+                { !edit && !play &&
                         <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.setState({edit: true})} 
                         renderIcon={() => <Icon name='edit' size={25} color='white'/>}/>
                     }
@@ -465,12 +482,12 @@ class Action extends Component{
 
     componentWillReceiveProps(props) {
         const { action, edit } = this.props;
-        if (edit != props.edit || props.action.zoneId !== action.zoneId || props.action.artifacId !== action.artifactId
-            || props.action.variableId !== action.variableId || props.action.value !== action.value) {
-               this.state.zone = Communication.getInstance().getZone(props.action.zoneId).name;
-                this.state.artifact = Communication.getInstance().getArtifact(props.action.artifactId).name;
-                if(props.action.variableId > 0){
-                    variable = Communication.getInstance().getVariable(props.action.variableId);
+        if (edit != props.edit || props.action.zone !== action.zone || props.action.artifac !== action.artifact
+            || props.action.variable !== action.variable || props.action.value !== action.value) {
+                this.state.zone = action.zone.name;
+                this.state.artifact = action.artifact.name;                
+                if(props.action.variable > 0){
+                    variable = action.variable;
                     this.state.variable = variable.name;
                     this.state.type = variable.type;
                 }
@@ -478,15 +495,15 @@ class Action extends Component{
                     this.state.variable = "Prendido";
                     this.state.type = '';
                 }
-            this.setState({refresh: true});
+            //this.setState({refresh: true});
         }
     }
 
     updateData(){
-        this.state.zone = Communication.getInstance().getZone(this.props.action.zoneId).name;
-        this.state.artifact = Communication.getInstance().getArtifact(this.props.action.artifactId).name;
-        if(this.props.action.variableId > 0){
-            variable = Communication.getInstance().getVariable(this.props.action.variableId);
+        this.state.zone = this.props.action.zone.name;
+        this.state.artifact = this.props.action.artifact.name;
+        if(this.props.action.variable > 0){
+            variable = this.props.action.variable;
             this.state.variable = variable.name;
             this.state.type = variable.type;
         }
@@ -494,9 +511,10 @@ class Action extends Component{
             this.state.variable = "Prendido";
             this.state.type = '';
         }
+        this.setState({refresh: true});
     }
 
-    componentWillMount(){
+    componentDidMount(){
         this.state.edit = this.props.edit;
         this.updateData();
     }
@@ -508,7 +526,7 @@ class Action extends Component{
                 <View style={{ flexDirection: 'row', backgroundColor: 'white', height: 40, paddingVertical:10, justifyContent: 'center' }}>
                     <View key={1} style={{flex:3}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{this.state.artifact} ({this.state.zone})</Text></View>
                     <View key={2} style={{flex:3}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{this.state.variable}</Text></View>
-                    <View key={3} style={{flex:2}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{getValueLabel(value, this.props.action.variableId, this.state.type)}</Text></View>
+                    <View key={3} style={{flex:2}}><Text style={{marginLeft: 10, color: 'rgb(80,80,80)', fontSize: 15}}>{getValueLabel(value, this.props.action.variable, this.state.type)}</Text></View>
                 </View>
             </TouchableOpacity>
         );

@@ -18,9 +18,9 @@ export default class ActionScreen extends Component {
 
         this.state = { 
             id: 0,
-            zoneId: 0,
-            artifactId: 0,
-            variableId: 0,
+            zone: 0,
+            artifact: 0,
+            variable: 0,
             value: 0,
             changed: false,
             edit: true,
@@ -55,21 +55,21 @@ export default class ActionScreen extends Component {
 
     
 
-    componentWillMount(){
+    async componentDidMount(){
         action = this.props.navigation.getParam('action', null);
-        this.zones = Communication.getInstance().getZones();
+        this.zones = await Communication.getInstance().getZones();
         if (action != null){
             this.state.id = this.props.navigation.state.params.action.id;
-            this.state.zoneId = this.props.navigation.state.params.action.zoneId;
-            this.artifacts = Communication.getInstance().getArtifacts(this.state.zoneId);
-            this.state.artifactId = this.props.navigation.state.params.action.artifactId;
-            this.variables = Communication.getInstance().getVariables(this.state.artifactId);
-            this.state.variableId = this.props.navigation.state.params.action.variableId;
-            if (this.state.variableId > 0) {
-                this.ranges = Communication.getInstance().getRanges(this.state.variableId);
-                variableId = this.state.variableId;
+            this.state.zone = this.props.navigation.state.params.action.zone;
+            this.artifacts = await Communication.getInstance().getArtifacts(this.state.zone);
+            this.state.artifact = this.props.navigation.state.params.action.artifact;
+            this.variables = this.artifacts.filter(function(obj){return obj.artifact == this.state.artifact});
+            this.state.variable = this.props.navigation.state.params.action.variable;
+            if (this.state.variable > 0) {
+                this.ranges = this.variables.filter(function(obj){return obj.id==this.state.variable}).first().ranges;
+                variable = this.state.variable;
                 variable = this.variables.filter(function(obj){
-                    return obj.id == variableId;
+                    return obj.id == variable;
                 })[0];
                 this.variableType = variable.type;
                 if (this.variableType=='dimmerValue'){
@@ -82,31 +82,35 @@ export default class ActionScreen extends Component {
             this.state.edit = false;
         }  
         this.props.navigation.setParams({ id: this.state.id, handleDelete: this.delete });    
+        this.setState({changed: false});
     }
 
-    changeZone(id){
+    async changeZone(id){
         if (id==0) {
             this.artifacts = [];
-            this.state.artifactId = 0;
+            this.state.artifact = 0;
             this.variables = [];
-            this.state.variableId = 0;
+            this.state.variable = 0;
             this.state.value = 0;
         } else {
-            this.artifacts = Communication.getInstance().getArtifacts(id);
+            this.artifacts = await Communication.getInstance().getArtifacts(id);
         }
-        this.setState({zoneId: id, changed: true});
+        this.setState({zone: id, changed: true});
     }
 
     changeArtifact(id){
         if (id==0) {
             this.variables = [];
-            this.state.variableId = 0;
+            this.state.variable = 0;
             this.state.value = 0;
         } else {
-            this.variables = Communication.getInstance().getVariables(id);
+            artifact = this.artifacts.filter(function(obj){return obj.id == id})[0];
+            this.variables = artifact.variables;
+            console.log("----------------------------- CAMBIO ARTEFACTO --------------------------");
+            console.log(artifact);
         }
         console.log('change artifact: '+id);
-        this.setState({artifactId: id, changed: true});
+        this.setState({artifact: id, changed: true});
     }
 
     changeVariable(id){
@@ -114,10 +118,11 @@ export default class ActionScreen extends Component {
             this.state.value = 0;
             this.variableType = 'on';
         } else {
-            this.ranges = Communication.getInstance().getRanges(id);
+            //this.ranges = this.variables.filter(function(obj){return obj.id==this.state.variable}).first().ranges;
             variable = this.variables.filter(function(obj){
                 return obj.id == id;
             })[0];
+            this.ranges = variable.ranges;
             console.log(variable);
             this.variableType = variable.type;
             if (this.variableType=='dimmerValue'){
@@ -127,12 +132,15 @@ export default class ActionScreen extends Component {
             }
         }
         console.log('change variable: '+id);
-        this.setState({variableId: id, changed: true});
+        this.setState({variable: id, changed: true});
     }
 
 
     save(){
-        action = { id: this.state.id, zoneId: this.state.zoneId, artifactId: this.state.artifactId, variableId: this.state.variableId, value: this.state.value }
+        zone = this.zones.filter(function(obj){return obj.id==this.state.zone})[0];
+        artifact = this.artifacts.filter(function(obj){return obj.id==this.state.artifact})[0];
+        variable = this.state.variable == 0 ? this.state.variable : this.variables.filter(function(obj){return obj.id==this.state.variable})[0];
+        action = { id: this.state.id, zone: zone, artifact: artifact, variable: variable, value: this.state.value }
         result = this.props.navigation.state.params.save(action);
         if (!result){
             this.setState({message: "Se produjo un error", errorMessage: result});
@@ -148,11 +156,11 @@ export default class ActionScreen extends Component {
     }
 
     validData(){
-        if (this.state.zoneId > 0 && this.state.artifactId > 0 && this.state.changed){
-            if (this.state.variableId > 0 && this.state.value > 0){
+        if (this.state.zone > 0 && this.state.artifact > 0 && this.state.changed){
+            if (this.state.variable > 0 && this.state.value > 0){
                 return true;
             } 
-            else if(this.state.variableId == 0){
+            else if(this.state.variable == 0){
                 return true;
             }
             else{
@@ -168,12 +176,14 @@ export default class ActionScreen extends Component {
     componentWillUpdate(){
         console.log("submittable: "+this.state.submittable+" - value: "+this.state.value);
         //this.state.submittable = this.validData();
-        //this.state.zoneId > 0 && this.state.artifactId > 0 && this.state.variableId > 0 && this.state.value.length > 0; //&& this.state.changed;
+        //this.state.zone > 0 && this.state.artifact > 0 && this.state.variable > 0 && this.state.value.length > 0; //&& this.state.changed;
     }
     
     render(){
         this.state.submittable = this.validData();
-        const { edit, zoneId, artifactId, variableId, value, changed, submittable} = this.state;
+        const { edit, zone, artifact, variable, value, changed, submittable} = this.state;
+        /*if(variable > 0)
+           variable=variable.id;*/
         console.log(submittable);
 
         return(
@@ -186,7 +196,7 @@ export default class ActionScreen extends Component {
                     </View>
                     <View style={{borderBottomWidth: 1, alignSelf: 'center', borderBottomColor: 'white', margin: 10}}>
                         <Picker
-                            selectedValue={zoneId}
+                            selectedValue={zone.id}
                             style={{ color:'white', height: 50, width: 300, }}
                             placeholder="Seleccione el cuarto"
                             onValueChange={(itemValue, itemIndex) => this.changeZone(itemValue)}
@@ -202,7 +212,7 @@ export default class ActionScreen extends Component {
                     </View>
                     <View style={{borderBottomWidth: 1, alignSelf: 'center', borderBottomColor: 'white', margin: 10}}>
                         <Picker
-                            selectedValue={artifactId}
+                            selectedValue={artifact.id}
                             style={{ color:'white', height: 50, width: 300, }}
                             enabled={edit}
                             onValueChange={(itemValue, itemIndex) => this.changeArtifact(itemValue)}>
@@ -216,7 +226,7 @@ export default class ActionScreen extends Component {
                     </View>
                     <View style={{borderBottomWidth: 1, alignSelf: 'center', borderBottomColor: 'white', margin: 10}}>
                         <Picker
-                            selectedValue={variableId}
+                            selectedValue={variable}
                             style={{ color:'white', height: 50, width: 300, }}
                             enabled={edit}
                             onValueChange={(itemValue, itemIndex) => this.changeVariable(itemValue)}>
@@ -225,14 +235,14 @@ export default class ActionScreen extends Component {
                                 <Picker.Item key={item.id} label={" " + item.name} value={item.id} />)}
                         </Picker>
                     </View>
-                    { artifactId > 0 && this.variableType!='dimmerSwitch' &&
+                    { artifact > 0 && this.variableType!='dimmerSwitch' &&
                         <View>
                             <View style={{marginTop: 20}}>
                                 <Text style={styles.whiteText}>Valor: </Text>
                             </View>
                             <View style={{borderBottomWidth: 1, alignSelf: 'center', borderBottomColor: 'white', margin: 10}}>
                                 
-                                { artifactId > 0 && variableId == 0 && 
+                                { artifact > 0 && variable == 0 && 
                                     <Picker
                                             selectedValue={value}
                                             style={{ color:'white', height: 50, width: 300, }}
@@ -242,7 +252,7 @@ export default class ActionScreen extends Component {
                                             <Picker.Item key={1} label=' Prendido' value='1' />
                                         </Picker>
                                 }
-                                { artifactId > 0 && variableId > 0 && (this.variableType == 'iconButtons' || this.variableType=='labelButtons') &&
+                                { artifact > 0 && variable > 0 && (this.variableType == 'iconButtons' || this.variableType=='labelButtons') &&
                                     <Picker
                                         selectedValue={this.state.value}
                                         style={{ color:'white', height: 50, width: 300, }}
@@ -255,7 +265,7 @@ export default class ActionScreen extends Component {
                                         
                                     </Picker>
                                 }
-                                { artifactId > 0 && variableId > 0 && this.variableType=='dimmerValue' &&
+                                { artifact > 0 && variable > 0 && this.variableType=='dimmerValue' &&
                                     <Picker
                                         selectedValue={this.state.value}
                                         style={{ color:'white', height: 50, width: 300, }}
@@ -271,7 +281,7 @@ export default class ActionScreen extends Component {
                             </View>
                         </View>
                     }
-                    { artifactId > 0 && variableId > 0 && this.variableType=='dimmerSwitch' &&
+                    { artifact > 0 && variable > 0 && this.variableType=='dimmerSwitch' &&
                         <View>
                             <View style={{marginTop: 20, marginBottom: 10}}>
                                 <Text style={styles.whiteText}>Porcentaje: </Text>

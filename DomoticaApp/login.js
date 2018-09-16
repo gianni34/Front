@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
-import { Animated, Dimensions, Text, View, Image, ScrollView, TextInput, TouchableHighlight, Alert, AsyncStorage, Keyboard, KeyboardAvoidingView } from 'react-native';
+import { Animated, Dimensions, Text, View, Image, ScrollView, TextInput, TouchableHighlight, TouchableOpacity, Alert, AsyncStorage, Keyboard, KeyboardAvoidingView } from 'react-native';
 
 import styles from './styles';
 import { LogoLogin, ErrorMessage } from './commons';
 import Communication from './communication';
+import Encryption from './encryption';
 
-IMAGE_HEIGHT = 250;
+var {height, width} = Dimensions.get('window');
+IMAGE_WIDTH = width*0.8;
 IMAGE_HEIGHT_SMALL = 50;
 
 export default class LogIn extends Component {
@@ -20,7 +22,6 @@ export default class LogIn extends Component {
             message: 'No hemos encontrado esa combinación de usuario y contraseña. Si no recuerda su contraseña ingrese a Olvidé mi contraseña.',
         }
         
-        this.imageHeight = IMAGE_HEIGHT;
         
         this.handleSubmit = this.handleSubmit.bind(this);
     }
@@ -29,39 +30,40 @@ export default class LogIn extends Component {
         okay = Communication.getInstance().authenticate(this.state.user, this.state.password);
         if (!okay) {
             this.setState({ errorMessage: true })
+            this.props.navigation.navigate(response.isAdmin ? 'AppAdmin': 'AppUser');
+          } catch (e) {
+            Alert.alert('Error', 'Oops! Something happened. Please try again '+ e);
+          }
         } else {
-            try {
-                AsyncStorage.setItem('userToken', this.state.user);
-                console.log("-------------- CORRECTO ----------");
-                this.props.navigation.navigate('App');
-            } catch (e) {
-                console.log(e);
-                Alert.alert('Error', 'Oops! Something happened. Please try again');
-            }
-            
+          await this.setStateAsync({ errorMessage: true, message: response.message })
         }
-      /*fetch("http://192.168.43.77:8000/login/Ceci/chechu/")
-      .then(response => {return response.json()})
-      .then((json) => this.setState({ logedIn: json.result, errorMessage: !json.result, idUser:json.id }))
-      .catch((error) => {
-        this.setState({errorMessage: true})
-        console.error(error);
-      });
-      this.props.navigation.push('MainMenu');*/
     }
-  
+
+    async componentWillMount(){
+      const userToken = await AsyncStorage.getItem('userToken');
+      ip = Communication.getInstance().getIP();
+      if (userToken){
+        this.setState({ip: ip, errorMessage: true, message: 'Se produjo un error, o su contraseña fue modificada. Por favor vuelva a iniciar sesión.'});
+      }
+      else
+        this.setState({ip: ip});
+    }
     
     render() {
         this.state.submittable = this.state.user.length > 0 && this.state.password.length > 4;
         const { user, password, submittable, logedIn, errorMessage, changePassword, idUser, message } = this.state;
         return (
-            <KeyboardAvoidingView behavior="position" style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}} enabled>
+            <KeyboardAvoidingView behavior="position" style={{flex: 1,  backgroundColor: 'rgb(22, 43, 59)'}} enabled>
                 <View style={{  marginTop: 10, alignItems: 'center' }}>
-                  <Image source={require('./domotica.png')} style={{height: this.imageHeight}} resizeMode='contain' />
+                  <TouchableOpacity onLongPress={() => this.props.navigation.push('config')}>
+                    <Image source={require('./images/futura.png')} style={{width: IMAGE_WIDTH}} resizeMode='contain' />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ marginTop: 40, backgroundColor: 'transparent', alignItems: 'center'}} >
+                <View style={{ backgroundColor: 'transparent', alignItems: 'center'}} >
                   { errorMessage && (
-                    <ErrorMessage message={this.state.message}/>)
+                    <TouchableOpacity onPress={() => this.setState({errorMessage: false})}>
+                      <ErrorMessage message={this.state.message}/>
+                    </TouchableOpacity>)
                   }
                   <View style={styles.inputContainerLogin}>
                     

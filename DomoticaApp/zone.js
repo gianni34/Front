@@ -28,17 +28,26 @@ export default class ZoneScreen extends Component {
         title: `${navigation.state.params.name}`
     });
 
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+          this.setState(state, resolve)
+        });
+    }
+
     componentWillMount(){
         this.state.id = this.props.navigation.getParam('zoneId', 0);
-        this.state.zone = Communication.getInstance().getZone(this.state.id);
-        this.state.artifacts = Communication.getInstance().getArtifacts(this.state.id);
-        
+    }
+
+    async componentDidMount() {
+        zone = await Communication.getInstance().getZone(this.state.id);
+        artifacts = await Communication.getInstance().getArtifacts(this.state.id);
+        this.setStateAsync({zone: zone, artifacts: artifacts});
     }
 
     refresh(){
         this.setState({id: this.state.id});
-        console.log("render en zona ???  ??? ?? ?? ?? ??? ? ?");
     }
+
 
     render(){
         const { errorMessage } = this.state;
@@ -62,14 +71,13 @@ export default class ZoneScreen extends Component {
                             <ErrorMessage message={this.state.message}/>
                         </View>)
                     }
-                    
                     { this.state.artifacts.map(item =>
-                        <Artifact handler={this.refresh} key={item.id} id={item.id}/>)
+                        <Artifact handler={this.refresh} key={item.id} object={item}/>)
                     }
 
                     </View>
                 </ScrollView>
-                </FontLoader>
+            </FontLoader>
         );
     }
 }

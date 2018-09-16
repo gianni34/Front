@@ -1,5 +1,5 @@
 import { createStackNavigator } from 'react-navigation';
-import DrawerStack from './drawerStack'
+import DrawerStackAdmin from './drawerStackAdmin';
 import UserScreen from './userScreen';
 import SceneScreen from './sceneScreen';
 import LogIn from './login';
@@ -8,11 +8,30 @@ import SecretAnswer from './secretAnswer';
 import ChangePassword from './changePassword';
 import ZoneScreen from './zone';
 import ActionScreen from './actionScreen';
+import ConfigIP  from './configIP';
 
 
-export const AppNav = createStackNavigator({
-    drawerStack: {screen: DrawerStack, navigationOptions:{ header: null }},
+export const AppNavAdmin = createStackNavigator({
+    drawerStack: {screen: DrawerStackAdmin, navigationOptions:{ header: null }},
     newUser: {screen: UserScreen, },
+    newScene: {screen: SceneScreen, },
+    zone: {screen: ZoneScreen},
+    action: {screen: ActionScreen},
+},{
+    headerMode: 'screen',
+    initialRouteName: 'drawerStack',
+    navigationOptions: ({navigation}) => ({
+      headerStyle: { 
+          backgroundColor: 'rgb(22, 43, 59)',
+          paddingLeft: 10,
+          paddingRight: 10
+      },
+      headerTintColor: 'white',
+    })
+});
+
+export const AppNavUser = createStackNavigator({
+    drawerStack: {screen: DrawerStackUser, navigationOptions:{ header: null }},
     newScene: {screen: SceneScreen, },
     zone: {screen: ZoneScreen},
     action: {screen: ActionScreen},
@@ -45,6 +64,9 @@ export const AuthNav = createStackNavigator({
     changePassword: {
         screen: ChangePassword,
         navigationOptions:{ title: 'Ingrese su nueva contraseña' }
+    },
+    config: {
+        screen: ConfigIP,
     },
 },{
     initialRouteName: 'logIn',

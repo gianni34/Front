@@ -1,8 +1,12 @@
 import React, { Component } from 'react';
-import { Text, View, Image, TextInput, TouchableHighlight, KeyboardAvoidingView } from 'react-native';
+import { Text, View, Image, TextInput, TouchableHighlight, KeyboardAvoidingView, Dimensions } from 'react-native';
 
+import styles from './styles';
 import { LogoLogin, ErrorMessage } from './commons';
 import Communication from './communication';
+
+var {height, width} = Dimensions.get('window');
+const IMAGE_WIDTH = width*0.8;
 
 export default class ChangePassword extends Component {
     constructor(props){
@@ -16,17 +20,15 @@ export default class ChangePassword extends Component {
         message: 'Se produjo un problema, por favor intente nuevamente.',
         result: false,
       }
-      
-      this.imageHeight = 300;
   
       this.handleSubmit = this.handleSubmit.bind(this);
       
     }
 
-    handleSubmit(){
-      okay = Communication.getInstance().changePassword(this.id, this.state.password);
-      if (okay) {
-        this.props.navigation.navigate('login');
+    async handleSubmit(){
+      response = await Communication.getInstance().changePassword(this.id, this.state.password);
+      if (response.result) {
+        this.props.navigation.push('login');
       } else {
         this.setState({errorMessage: true});
       }
@@ -43,9 +45,10 @@ export default class ChangePassword extends Component {
       return(
         <KeyboardAvoidingView behavior="position" style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}} enabled>
             <View style={{  marginTop: 10, alignItems: 'center' }}>
-                <Image source={require('./domotica.png')} style={{height: this.imageHeight}} resizeMode='contain' />
+                <Image source={require('./images/futura.png')}  style={{width: IMAGE_WIDTH}} resizeMode='contain' />
             </View>
-                <View style={{ marginTop: 40, backgroundColor: 'transparent', alignItems: 'center'}} >
+            <View style={{ backgroundColor: 'transparent', alignItems: 'center'}} >
+                 
                   {errorMessage && <ErrorMessage message={message} />}
           
           <View style={styles.inputContainerLogin}>
@@ -78,13 +81,16 @@ export default class ChangePassword extends Component {
             />
       
           </View>
-          { submittable && (
-                <TouchableHighlight onPress={this.handleSubmit} underlayColor='rgb(22, 43, 59)'>
-                  <View style={styles.buttonContainer}>
-                    <Text style={styles.textSubmitLogin}>Continuar</Text>
-                  </View>
-                </TouchableHighlight>
-          )}
+          <View style={{ backgroundColor: 'transparent', justifyContent: 'flex-start'} } >
+            { submittable && (
+                  <TouchableHighlight onPress={this.handleSubmit} underlayColor='rgb(22, 43, 59)'>
+                    <View style={styles.buttonContainer}>
+                      <Text style={styles.textSubmitLogin}>Continuar</Text>
+                    </View>
+                  </TouchableHighlight>
+                  
+            )}
+            </View>
           </View>
         </KeyboardAvoidingView>
       );

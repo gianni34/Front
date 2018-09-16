@@ -120,13 +120,13 @@ export default styles = StyleSheet.create({
       flex:1, 
       paddingLeft: 20, 
       color: 'rgb(252, 249, 249)',
-      fontSize: 17,
+      fontSize: 14,
     },
 
     labelLogin:{
       flex:1, 
       color: 'rgb(252, 249, 249)',
-      fontSize: 17,
+      fontSize: 14,
     },
   
     linkLogin: {
@@ -235,13 +235,27 @@ export default styles = StyleSheet.create({
   
     zoneName: {
       marginLeft: 20,
-      marginTop: 5,
       fontSize: 18,
       color: 'white',
       fontWeight: 'bold',
       position: "absolute"
     },
 
+    zoneTemperatureContainer: {
+      marginRight: 5,
+      marginTop: 5,
+      width: '100%',
+      position: "absolute",
+      flexDirection: 'row',
+    },
+
+    zoneTemperature: {
+      fontSize: 18,
+      color: 'white',
+      fontWeight: 'bold',
+      justifyContent: 'flex-start',
+      //alignSelf: 'flex-end',
+    },
     
     variableName: {
       marginLeft: 20,
@@ -262,7 +276,7 @@ export default styles = StyleSheet.create({
       marginBottom: 10,
       fontSize: 60,
       color: 'white',
-    }
+    }, 
   
   
   });

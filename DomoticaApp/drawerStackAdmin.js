@@ -2,11 +2,11 @@ import { createStackNavigator } from 'react-navigation';
 import React from 'react';
 import { StyleSheet, Text, View, Image, Button, TextInput, Alert, TouchableHighlight, Dimensions, ScrollView, ImageBackground } from 'react-native';
 
-import DrawerScreen from './drawerScreen.js';
+import DrawerScreenAdmin from './drawerScreenAdmin.js';
 import { DrawerActions } from 'react-navigation';
 
-const DrawerNavigation = createStackNavigator({
-    DrawerStack: {screen: DrawerScreen}
+const DrawerNavigationAdmin = createStackNavigator({
+    DrawerStackAdmin: {screen: DrawerScreenAdmin}
 },{
     headerMode: 'screen',
     navigationOptions: ({navigation}) => ({
@@ -30,6 +30,6 @@ const DrawerNavigation = createStackNavigator({
             </TouchableHighlight>
         </View>,
     })
-})
+});
 
-export default DrawerNavigation;
+export default DrawerNavigationAdmin;

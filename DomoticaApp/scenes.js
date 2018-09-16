@@ -104,18 +104,32 @@ export default class Scenes extends Component {
     customBackHandler = (instance) => {
         if(instance.isMenuOpen()){
             instance.close();
+        } else {
+            this.props.navigation.navigate('Home');
         }
     }
 
-    componentWillMount(){
+    /*componentWillMount(){
         this.state.scenes = Communication.getInstance().getScenes();
-    }
+    }*/
 
-    refresh(){
-        scenes = Communication.getInstance().getScenes()
-        this.setState({scenes: scenes});
+    async refresh(){
+        scenes = await Communication.getInstance().getScenes(true, false);
+        this.setStateAsync({scenes: scenes});
     }
-
+    
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+          this.setState(state, resolve)
+        });
+    }
+    
+    async componentDidMount() {
+        //StatusBar.setNetworkActivityIndicatorVisible(true);
+        const scenes = await Communication.getInstance().getScenes(true, true);
+        this.setStateAsync({scenes: scenes});
+        //StatusBar.setNetworkActivityIndicatorVisible(false);
+    }
 
     render(){
         return(
@@ -130,10 +144,14 @@ export default class Scenes extends Component {
                     <Text style={[styles.whiteText, {paddingLeft: 50}]}>Escenas</Text>
                 </View>
                 <ScrollView style={{flex: 1, backgroundColor: 'rgb(204, 204, 204)', paddingTop:10 }}>
-                {this.state.scenes.map(item =>
+                    { this.state.scenes.length == 0 && 
+                    <View style={{flex: 1, backgroundColor: 'white'}}>
+                    </View>}
+                    { this.state.scenes.map(item =>
                         <View style={{ height:70, marginTop:10, marginHorizontal:10 }} key={item.id}>
                              <Block name={item.name} key={item.id} id={item.id} navigation={this.props.navigation} refresh={this.refresh}/>
-                        </View>)}
+                        </View>)
+                    }
                 <View style={{height:100, width:'100%'}}/>
                 </ScrollView>
                 <ActionButton buttonColor='rgb(22, 43, 59)' onPress={() => this.props.navigation.push('newScene')} 

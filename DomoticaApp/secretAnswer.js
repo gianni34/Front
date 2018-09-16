@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
-import { Text, View, Image, TextInput, TouchableHighlight, Alert, AsyncStorage } from 'react-native';
+import { Text, View, Image, TextInput, TouchableHighlight, Alert, AsyncStorage, Dimensions } from 'react-native';
 
 import { LogoLogin, ErrorMessage } from './commons';
 import Communication from './communication';
+
+var {height, width} = Dimensions.get('window');
+const IMAGE_WIDTH = width*0.8;
 
 export default class SecretAnswer extends Component {
     constructor(props){
@@ -23,8 +26,8 @@ export default class SecretAnswer extends Component {
           
     }
 
-    handleSubmit() {
-        okay = Communication.getInstance().validateSecretAnswer(this.state.user, this.state.answer);
+    async handleSubmit() {
+        okay = await Communication.getInstance().validateSecretAnswer(this.state.user, this.state.answer);
         if (okay) {
             this.props.navigation.navigate('changePassword', {user: this.state.user});
         } else {
@@ -43,7 +46,7 @@ export default class SecretAnswer extends Component {
         return(
             <View style={{flex: 1, backgroundColor: 'rgb(22, 43, 59)'}}>
                 <View style={{ marginTop:10, alignItems: 'center' }}>
-                    <Image source={require('./domotica.png')} style={{height: this.imageHeight}} resizeMode='contain' />
+                    <Image source={require('./images/futura.png')}  style={{width: IMAGE_WIDTH}} resizeMode='contain' />
                 </View>
                 <View style={{ marginTop: 40, backgroundColor: 'transparent', justifyContent: 'flex-start'}} >
                       

@@ -38,16 +38,23 @@ export default class UserScreen extends Component {
 
     }
 
-    componentWillMount(){
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+          this.setState(state, resolve)
+        });
+    }
+
+    async componentDidMount(){
         this.state.id = this.props.navigation.getParam('userId', 0);
         if (this.state.id > 0) {
-            user  = Communication.getInstance().getUser(this.state.id);
+            user  = await Communication.getInstance().getUser(this.state.id);
             if (user){
                 this.state.user = user;
                 this.state.name = user.name;
                 this.state.password = user.password;
                 this.state.passwordRepeat = user.password;
                 this.state.isAdmin = user.isAdmin;
+                await this.setStateAsync({errorMessage: false});
                 console.log('datos levantados '+ this.state.name);
             }
         }
@@ -81,15 +88,15 @@ export default class UserScreen extends Component {
         this.setState({isAdmin: isAdmin});
     }
 
-    saveUser(){
+    async saveUser(){
         if (this.state.id > 0){
-            result = Communication.getInstance().updateUser(this.state.id, this.state.name, this.state.password, this.state.isAdmin);         
+            result = await Communication.getInstance().updateUser(this.state.id, this.state.name, this.state.password, this.state.isAdmin);         
             console.log("update");
         } else {
-            result = Communication.getInstance().createUser(this.state.name, this.state.password, this.state.isAdmin);
+            result = await Communication.getInstance().createUser(this.state.name, this.state.password, this.state.isAdmin);
         }
         if (result.error){
-            this.setState({message: result.message, errorMessage: result.error});
+            this.setStateAsync({message: result.message, errorMessage: result.error});
         } else {
             this.props.navigation.state.params.refresh();
             this.props.navigation.goBack();
